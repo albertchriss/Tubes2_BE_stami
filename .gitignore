@@ -1,0 +1,13 @@
+# Environment Variables
+.env*
+!.env.example
+
+# Air Temporary Files
+tmp/
+
+# Binary Files
+bin/
+
+# IDE Files
+.idea/
+.vscode/

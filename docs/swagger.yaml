@@ -1,0 +1,27 @@
+definitions:
+  health.HealthCheckResponse:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: Check if the application is running
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/health.HealthCheckResponse'
+      summary: Health Check
+      tags:
+      - Health
+swagger: "2.0"
