@@ -11,3 +11,5 @@ bin/
 # IDE Files
 .idea/
 .vscode/
+
+*.json
