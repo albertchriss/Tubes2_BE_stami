@@ -104,7 +104,7 @@ func Scraper(outputFilename string) error {
 		return fmt.Errorf("failed to write JSON to file %s: %w", outputFilename, err)
 	}
 
-	fmt.Println(string(jsonData))
+	// fmt.Println(string(jsonData))
 	fmt.Printf("Data saved to %s\n", outputFilename)
 
 	return nil

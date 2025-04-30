@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/albertchriss/Tubes2_BE_stami/internal/app/health"
+	"github.com/albertchriss/Tubes2_BE_stami/internal/app/search"
 	"github.com/albertchriss/Tubes2_BE_stami/internal/core"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -12,6 +13,7 @@ import (
 type Handlers struct {
 	DocsHandler   gin.HandlerFunc
 	HealthHandler *health.Handler
+	SearchHandler *search.Handler
 }
 
 // InitHandlers initializes all the handlers for the application.
@@ -24,8 +26,12 @@ func InitHandlers(appCtx *core.AppContext) *Handlers {
 	// Health Handler Initialization
 	healthHandler := health.NewHandler()
 
+	searchService := search.NewService(appCtx)
+	searchHandler := search.NewHandler(searchService)
+
 	return &Handlers{
 		DocsHandler:   docsHandler,
 		HealthHandler: healthHandler,
+		SearchHandler: searchHandler,
 	}
 }

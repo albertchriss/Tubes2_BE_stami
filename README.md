@@ -35,7 +35,7 @@ Before setting up the project, make sure you have the following installed:
     ```bash
     cd Tubes2_BE_stami
     ```
-3. Create a `.env.dev` file in the root directory and set the environment variables. You can use the `.env.example` file as a reference.
+3. Create a `.env.dev` file in the `deployments/docker` directory and set the environment variables. You can use the `.env.example` file as a reference.
 
 4. Install the required Go modules
 
