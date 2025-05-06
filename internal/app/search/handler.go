@@ -56,7 +56,7 @@ func (h *Handler) BFSSearchHandler(c *gin.Context) {
 		return
 	}
 
-	res := h.service.DFSSearch(query, tipe)
+	res := h.service.BFSSearch(query, tipe)
 	c.JSON(http.StatusOK, SearchResponse{
 		Message: "BFS search completed",
 		Result:  res,
@@ -73,7 +73,7 @@ func (h *Handler) BFSSearchHandler(c *gin.Context) {
 // @Param tipe query string true "Search type" enums(single, multiple)
 // @Success 200 {object} SearchResponse
 // @Router /search/dfs [get]
-func (h *Handler) DFSSearchHandler(c *gin.Context) {
+func (h *Handler) DFSSearch(c *gin.Context) {
 	query := c.Query("q")
 	if query == "" {
 		c.JSON(http.StatusBadRequest, SearchResponse{
@@ -97,9 +97,9 @@ func (h *Handler) DFSSearchHandler(c *gin.Context) {
 		return
 	}
 
-	res := h.service.BFSSearch(query, tipe)
+	res := h.service.DFSSearch(query, tipe)
 	c.JSON(http.StatusOK, SearchResponse{
-		Message: "BFS search completed",
+		Message: "DFS search completed",
 		Result:  res,
 	})
 }
