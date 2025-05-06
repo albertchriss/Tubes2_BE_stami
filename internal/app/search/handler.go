@@ -2,6 +2,7 @@ package search
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/albertchriss/Tubes2_BE_stami/internal/scraper"
 	"github.com/gin-gonic/gin"
@@ -29,7 +30,7 @@ func NewHandler(service Service) *Handler {
 // @Accept json
 // @Produce json
 // @Param q query string true "Query parameter"
-// @Param tipe query string true "Search type" enums(single, multiple)
+// @Param num query string false "Number of recipes to return" default(1)
 // @Success 200 {object} SearchResponse
 // @Router /search/bfs [get]
 func (h *Handler) BFSSearchHandler(c *gin.Context) {
@@ -41,22 +42,26 @@ func (h *Handler) BFSSearchHandler(c *gin.Context) {
 		return
 	}
 
-	tipe := c.Query("tipe")
-	if tipe == "" {
+	numRecipe := c.Query("num")
+	if numRecipe == "" {
+		numRecipe = "1"
+	}
+	numRecipeInt, err := strconv.Atoi(numRecipe)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, SearchResponse{
-			Message: "Type parameter is required",
+			Message: "num parameter must be an integer",
 		})
 		return
 	}
 
-	if tipe != scraper.SINGLERECIPE && tipe != scraper.MULTIPLERECIPE {
+	if numRecipeInt < 1 {
 		c.JSON(http.StatusBadRequest, SearchResponse{
-			Message: "Type parameter must be single or multiple",
+			Message: "num parameter must be greater than 0",
 		})
 		return
 	}
 
-	res := h.service.BFSSearch(query, tipe)
+	res := h.service.BFSSearch(query, numRecipeInt)
 	c.JSON(http.StatusOK, SearchResponse{
 		Message: "BFS search completed",
 		Result:  res,
@@ -70,7 +75,7 @@ func (h *Handler) BFSSearchHandler(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param q query string true "Query parameter"
-// @Param tipe query string true "Search type" enums(single, multiple)
+// @Param num query string false "Number of recipes to return" default(1)
 // @Success 200 {object} SearchResponse
 // @Router /search/dfs [get]
 func (h *Handler) DFSSearchHandler(c *gin.Context) {
@@ -82,22 +87,26 @@ func (h *Handler) DFSSearchHandler(c *gin.Context) {
 		return
 	}
 
-	tipe := c.Query("tipe")
-	if tipe == "" {
+	numRecipe := c.Query("num")
+	if numRecipe == "" {
+		numRecipe = "1"
+	}
+	numRecipeInt, err := strconv.Atoi(numRecipe)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, SearchResponse{
-			Message: "Type parameter is required",
+			Message: "num parameter must be an integer",
 		})
 		return
 	}
 
-	if tipe != scraper.SINGLERECIPE && tipe != scraper.MULTIPLERECIPE {
+	if numRecipeInt < 1 {
 		c.JSON(http.StatusBadRequest, SearchResponse{
-			Message: "Type parameter must be single or multiple",
+			Message: "num parameter must be greater than 0",
 		})
 		return
 	}
 
-	res := h.service.DFSSearch(query, tipe)
+	res := h.service.DFSSearch(query, numRecipeInt)
 	c.JSON(http.StatusOK, SearchResponse{
 		Message: "DFS search completed",
 		Result:  res,

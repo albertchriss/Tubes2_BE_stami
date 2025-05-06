@@ -12,7 +12,7 @@ func SingleRecipeBFS(recipe *scraper.Recipe, start string) scraper.TreeNode {
 	return root	
 }
 
-func MultipleRecipeBFS(recipe *scraper.Recipe, start string) scraper.TreeNode {
+func MultipleRecipeBFS(recipe *scraper.Recipe, start string, numRecipe int) scraper.TreeNode {
 
 	// Buat node root untuk elemen target
 	root := scraper.TreeNode{Name: start}

@@ -10,7 +10,7 @@ func SingleRecipeDFS(recipe *scraper.Recipe, start string) scraper.TreeNode {
 	return root	
 }
 
-func MultipleRecipeDFS(recipe *scraper.Recipe, start string) scraper.TreeNode {
+func MultipleRecipeDFS(recipe *scraper.Recipe, start string, numRecipe int) scraper.TreeNode {
 	root := scraper.TreeNode{Name: start}
 	// implement here
 	return root	

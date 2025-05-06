@@ -9,8 +9,8 @@ import (
 )
 
 type Service interface {
-	BFSSearch(query string, tipe string) scraper.TreeNode
-	DFSSearch(query string, tipe string) scraper.TreeNode
+	BFSSearch(query string, numRecipe int) scraper.TreeNode
+	DFSSearch(query string, numRecipe int) scraper.TreeNode
 }
 
 type service struct {
@@ -23,7 +23,7 @@ func NewService(appCtx *core.AppContext) *service {
 	}
 }
 
-func (s *service) BFSSearch(query string, tipe string) scraper.TreeNode {
+func (s *service) BFSSearch(query string, numRecipe int) scraper.TreeNode {
 	log.Println("Performing BFS search for query:", query)
 	recipe := s.appCtx.Config.RecipeTree
 	if recipe == nil {
@@ -35,16 +35,16 @@ func (s *service) BFSSearch(query string, tipe string) scraper.TreeNode {
 		return scraper.TreeNode{Name: "Query not found in recipe tree"}
 	}
 
-	if tipe == scraper.MULTIPLERECIPE {
+	if numRecipe > 1 {
 		log.Println("Performing BFS for multiple recipes")
-		return utils.MultipleRecipeBFS(recipe, query)
+		return utils.MultipleRecipeBFS(recipe, query, numRecipe)
 	} else {
 		log.Println("Performing BFS for single recipe")
 		return utils.SingleRecipeBFS(recipe, query)
 	}
 }
 
-func (s *service) DFSSearch(query string, tipe string) scraper.TreeNode {
+func (s *service) DFSSearch(query string, numRecipe int) scraper.TreeNode {
 	log.Println("Performing DFS search for query:", query)
 	recipe := s.appCtx.Config.RecipeTree
 	if recipe == nil {
@@ -56,11 +56,11 @@ func (s *service) DFSSearch(query string, tipe string) scraper.TreeNode {
 		return scraper.TreeNode{Name: "Query not found in recipe tree"}
 	}
 
-	if tipe == scraper.SINGLERECIPE {
+	if numRecipe == 1 {
 		log.Println("Performing DFS for single recipe")
 		return utils.SingleRecipeDFS(recipe, query)
 	} else {
 		log.Println("Performing DFS for multiple recipes")
-		return utils.MultipleRecipeDFS(recipe, query)
+		return utils.MultipleRecipeDFS(recipe, query, numRecipe)
 	}
 }

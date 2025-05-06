@@ -60,15 +60,11 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "enum": [
-                            "single",
-                            "multiple"
-                        ],
                         "type": "string",
-                        "description": "Search type",
-                        "name": "tipe",
-                        "in": "query",
-                        "required": true
+                        "default": "1",
+                        "description": "Number of recipes to return",
+                        "name": "num",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -103,15 +99,11 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "enum": [
-                            "single",
-                            "multiple"
-                        ],
                         "type": "string",
-                        "description": "Search type",
-                        "name": "tipe",
-                        "in": "query",
-                        "required": true
+                        "default": "1",
+                        "description": "Number of recipes to return",
+                        "name": "num",
+                        "in": "query"
                     }
                 ],
                 "responses": {

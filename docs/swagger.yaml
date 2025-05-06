@@ -51,13 +51,10 @@ paths:
         name: q
         required: true
         type: string
-      - description: Search type
-        enum:
-        - single
-        - multiple
+      - default: "1"
+        description: Number of recipes to return
         in: query
-        name: tipe
-        required: true
+        name: num
         type: string
       produces:
       - application/json
@@ -80,13 +77,10 @@ paths:
         name: q
         required: true
         type: string
-      - description: Search type
-        enum:
-        - single
-        - multiple
+      - default: "1"
+        description: Number of recipes to return
         in: query
-        name: tipe
-        required: true
+        name: num
         type: string
       produces:
       - application/json
