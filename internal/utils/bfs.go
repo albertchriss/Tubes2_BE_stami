@@ -9,7 +9,40 @@ import (
 
 func SingleRecipeBFS(recipe *scraper.Recipe, start string) scraper.TreeNode {
 	root := scraper.TreeNode{Name: start}
-	// asdfasd
+	queue := []*scraper.TreeNode{&root} // tambahkan root ke queue
+	visited := make(map[string]bool)
+
+	for (len(queue) > 0) {
+		currNode := queue[0]
+		queue = queue[1:]
+
+		if visited[currNode.Name] {
+			continue
+		}
+		visited[currNode.Name] = true
+
+		if (scraper.IsBaseElement(currNode.Name)) {
+			continue
+		}
+		combinations, found := (*recipe)[currNode.Name]
+		if (!found || len(combinations) == 0) {
+			fmt.Printf("Peringatan: Tidak ditemukan resep untuk elemen perantara '%s'.\n", currNode.Name)
+			currNode.Children = nil // Pastikan tidak ada anak
+			continue
+		}
+
+		next := combinations[0]
+		first, second := next.First(), next.Second()
+		node := &scraper.TreeNode{Name: "+"}
+		node.Children = []scraper.TreeNode{
+			{Name: first},
+			{Name: second},
+		}
+		currNode.Children = append(currNode.Children, *node)
+		queue = append(queue, &node.Children[0], &node.Children[1])
+		// fmt.Print("Node: ", currNode.Name, " -> ", first, " + ", second, "\n")
+	}
+
 	return root
 }
 

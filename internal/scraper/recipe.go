@@ -68,18 +68,33 @@ func JsonToTier(filename string) *Tier {
 	return &result
 }
 
-func (recipe* Recipe) SortRecipeChildren(tier* Tier){
+func (recipe *Recipe) SortRecipeChildren(tier *Tier) {
 	for key, combinations := range *recipe {
+		newCombs := []Combination{}
 		value := []int{}
 		for _, combination := range combinations {
+			_, foundFirst := (*tier)[combination.First()]
+			if !foundFirst {
+				log.Printf("Element %s not found in tier map\n", combination.First())
+				continue
+			}
+			_, foundSec := (*tier)[combination.Second()]
+			if !foundSec {
+				log.Printf("Element %s not found in tier map\n", combination.Second())
+				continue
+			}
+
 			first := combination.First()
 			second := combination.Second()
 			value = append(value, max((*tier)[first], (*tier)[second]))
+			newCombs = append(newCombs, combination)
 		}
 		// Sort combinations based on the corresponding value
-		sort.Slice(combinations, func(i, j int) bool {
-			return value[i] < value[j]
-		})
-		(*recipe)[key] = combinations
+		if len(newCombs) > 0 {
+			sort.Slice(newCombs, func(i, j int) bool {
+				return value[i] < value[j]
+			})
+			(*recipe)[key] = newCombs
+		} 
 	}
 }
