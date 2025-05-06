@@ -73,7 +73,7 @@ func (h *Handler) BFSSearchHandler(c *gin.Context) {
 // @Param tipe query string true "Search type" enums(single, multiple)
 // @Success 200 {object} SearchResponse
 // @Router /search/dfs [get]
-func (h *Handler) DFSSearch(c *gin.Context) {
+func (h *Handler) DFSSearchHandler(c *gin.Context) {
 	query := c.Query("q")
 	if query == "" {
 		c.JSON(http.StatusBadRequest, SearchResponse{
