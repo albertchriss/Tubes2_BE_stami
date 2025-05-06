@@ -69,4 +69,33 @@ paths:
       summary: BFS search handler
       tags:
       - Search
+  /search/dfs:
+    get:
+      consumes:
+      - application/json
+      description: Search the recipe of elements using DFS
+      parameters:
+      - description: Query parameter
+        in: query
+        name: q
+        required: true
+        type: string
+      - description: Search type
+        enum:
+        - single
+        - multiple
+        in: query
+        name: tipe
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/search.SearchResponse'
+      summary: DFS search handler
+      tags:
+      - Search
 swagger: "2.0"

@@ -14,6 +14,7 @@ func RegisterRoutes(r *gin.Engine, handlers *Handlers, appCtx *core.AppContext) 
 	searchGroup := r.Group("/search")
 	{
 		searchGroup.GET("/bfs", handlers.SearchHandler.BFSSearchHandler)
+		searchGroup.GET("/dfs", handlers.SearchHandler.DFSSearchHandler)
 	}
 
 }

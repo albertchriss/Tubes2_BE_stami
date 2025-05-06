@@ -80,6 +80,49 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/search/dfs": {
+            "get": {
+                "description": "Search the recipe of elements using DFS",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "DFS search handler",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Query parameter",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "single",
+                            "multiple"
+                        ],
+                        "type": "string",
+                        "description": "Search type",
+                        "name": "tipe",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/search.SearchResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {

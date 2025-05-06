@@ -49,6 +49,54 @@ func (h *Handler) BFSSearchHandler(c *gin.Context) {
 		return
 	}
 
+	if tipe != scraper.SINGLERECIPE && tipe != scraper.MULTIPLERECIPE {
+		c.JSON(http.StatusBadRequest, SearchResponse{
+			Message: "Type parameter must be single or multiple",
+		})
+		return
+	}
+
+	res := h.service.DFSSearch(query, tipe)
+	c.JSON(http.StatusOK, SearchResponse{
+		Message: "BFS search completed",
+		Result:  res,
+	})
+}
+
+// DFSSearchHandler godoc
+// @Summary DFS search handler
+// @Description Search the recipe of elements using DFS
+// @Tags Search
+// @Accept json
+// @Produce json
+// @Param q query string true "Query parameter"
+// @Param tipe query string true "Search type" enums(single, multiple)
+// @Success 200 {object} SearchResponse
+// @Router /search/dfs [get]
+func (h *Handler) DFSSearchHandler(c *gin.Context) {
+	query := c.Query("q")
+	if query == "" {
+		c.JSON(http.StatusBadRequest, SearchResponse{
+			Message: "Query parameter is required",
+		})
+		return
+	}
+
+	tipe := c.Query("tipe")
+	if tipe == "" {
+		c.JSON(http.StatusBadRequest, SearchResponse{
+			Message: "Type parameter is required",
+		})
+		return
+	}
+
+	if tipe != scraper.SINGLERECIPE && tipe != scraper.MULTIPLERECIPE {
+		c.JSON(http.StatusBadRequest, SearchResponse{
+			Message: "Type parameter must be single or multiple",
+		})
+		return
+	}
+
 	res := h.service.BFSSearch(query, tipe)
 	c.JSON(http.StatusOK, SearchResponse{
 		Message: "BFS search completed",

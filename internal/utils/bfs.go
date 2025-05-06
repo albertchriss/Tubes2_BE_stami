@@ -3,40 +3,16 @@ package utils
 import (
 	"fmt"
 	"sync"
-
 	"github.com/albertchriss/Tubes2_BE_stami/internal/scraper"
 )
 
-// func SingleRecipeBFS(recipe *scraper.Recipe, start string) {
-// 	var queue []string
-// 	status := make(map[string]int)
-// 	parent := make(map[string]int)
-// 	nodeId := make(map[int]scraper.Combination)
-// 	queue = append(queue, start)
-// 	visited[start] = true
-// 	for len(queue) > 0 {
-// 		current := queue[0]
-// 		queue = queue[1:]
+func SingleRecipeBFS(recipe *scraper.Recipe, start string) scraper.TreeNode {
+	root := scraper.TreeNode{Name: start}
+	// asdfasd
+	return root	
+}
 
-// 		if scraper.IsBaseElement(current) {
-// 			continue
-// 		}
-
-// 		for _, combination := range (*recipe)[current] {
-// 			first, second := combination.First(), combination.Second()
-// 			if !visited[first] {
-// 				queue = append(queue, first)
-// 				visited[first] = true
-// 			}
-// 			if !visited[second] {
-// 				queue = append(queue, second)
-// 				visited[second] = true
-// 			}
-// 		}
-// 	}
-// }
-
-func MultipleRecipeBFS(recipe scraper.Recipe, start string) scraper.TreeNode {
+func MultipleRecipeBFS(recipe *scraper.Recipe, start string) scraper.TreeNode {
 
 	// Buat node root untuk elemen target
 	root := scraper.TreeNode{Name: start}
@@ -75,7 +51,7 @@ func MultipleRecipeBFS(recipe scraper.Recipe, start string) scraper.TreeNode {
 					return
 				}
 
-				combinations, found := recipe[currNode.Name]
+				combinations, found := (*recipe)[currNode.Name]
 
 				if !found || len(combinations) == 0 {
 					fmt.Printf("Peringatan: Tidak ditemukan resep untuk elemen perantara '%s'.\n", currNode.Name)
