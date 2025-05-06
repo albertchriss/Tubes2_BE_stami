@@ -3,12 +3,13 @@ package search
 import (
 	"net/http"
 
+	"github.com/albertchriss/Tubes2_BE_stami/internal/scraper"
 	"github.com/gin-gonic/gin"
 )
 
 type SearchResponse struct {
-	Message string `json:"message"`
-	Result  []string `json:"result"`
+	Message string           `json:"message"`
+	Result  scraper.TreeNode `json:"result"`
 }
 
 type Handler struct {
@@ -21,6 +22,16 @@ func NewHandler(service Service) *Handler {
 	}
 }
 
+// BFSSearchHandler godoc
+// @Summary BFS search handler
+// @Description Search the recipe of elements using BFS
+// @Tags Search
+// @Accept json
+// @Produce json
+// @Param q query string true "Query parameter"
+// @Param tipe query string true "Search type" enums(single, multiple)
+// @Success 200 {object} SearchResponse
+// @Router /search/bfs [get]
 func (h *Handler) BFSSearchHandler(c *gin.Context) {
 	query := c.Query("q")
 	if query == "" {
@@ -30,9 +41,17 @@ func (h *Handler) BFSSearchHandler(c *gin.Context) {
 		return
 	}
 
-	str := h.service.BFSSearch(query)
+	tipe := c.Query("tipe")
+	if tipe == "" {
+		c.JSON(http.StatusBadRequest, SearchResponse{
+			Message: "Type parameter is required",
+		})
+		return
+	}
+
+	res := h.service.BFSSearch(query, tipe)
 	c.JSON(http.StatusOK, SearchResponse{
 		Message: "BFS search completed",
-		Result:  str,
+		Result:  res,
 	})
 }

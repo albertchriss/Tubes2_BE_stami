@@ -21,8 +21,13 @@ func (c Combination) Second() string {
 	return ""
 }
 
-type Recipe map[string][]Combination
+func IsBaseElement(s string) bool {
+	return s == "Air" || s == "Earth" || s == "Fire" || s == "Water" || s == "Time"
+}
 
+// Recipe is a map where the key is a string and the value is a slice of Combination
+// representing the combinations of elements that can be made from the key element.
+type Recipe map[string][]Combination
 
 func JsonToMap(filename string) *Recipe {
 	var result Recipe
@@ -38,3 +43,13 @@ func JsonToMap(filename string) *Recipe {
 	log.Println("JSON file successfully converted to map")
 	return &result
 }
+
+// TreeNode is the struct for frontend
+// representation of the recipe tree.
+type TreeNode struct {
+	Name     string     `json:"name"`
+	Children []TreeNode `json:"children"`
+}
+
+const SINGLERECIPE = "single"
+const MULTIPLERECIPE = "multiple"

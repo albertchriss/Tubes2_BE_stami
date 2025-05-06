@@ -37,6 +37,49 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/search/bfs": {
+            "get": {
+                "description": "Search the recipe of elements using BFS",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "BFS search handler",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Query parameter",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "single",
+                            "multiple"
+                        ],
+                        "type": "string",
+                        "description": "Search type",
+                        "name": "tipe",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/search.SearchResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -48,6 +91,31 @@ const docTemplate = `{
                 },
                 "status": {
                     "type": "string"
+                }
+            }
+        },
+        "scraper.TreeNode": {
+            "type": "object",
+            "properties": {
+                "children": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/scraper.TreeNode"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "search.SearchResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "result": {
+                    "$ref": "#/definitions/scraper.TreeNode"
                 }
             }
         }
