@@ -3,13 +3,14 @@ package utils
 import (
 	"fmt"
 	"sync"
+
 	"github.com/albertchriss/Tubes2_BE_stami/internal/scraper"
 )
 
 func SingleRecipeBFS(recipe *scraper.Recipe, start string) scraper.TreeNode {
 	root := scraper.TreeNode{Name: start}
 	// asdfasd
-	return root	
+	return root
 }
 
 func MultipleRecipeBFS(recipe *scraper.Recipe, start string, numRecipe int) scraper.TreeNode {
@@ -23,13 +24,9 @@ func MultipleRecipeBFS(recipe *scraper.Recipe, start string, numRecipe int) scra
 	var wg sync.WaitGroup
 
 	visited := make(map[string]bool)
-	depth := 0
+	currNum := 1
 
 	for len(queue) > 0 {
-		if depth > 3 {
-			fmt.Println("Peringatan: Terlalu dalam, menghentikan pencarian.")
-			break
-		}
 
 		currentQueue := []*scraper.TreeNode{}
 
@@ -60,8 +57,15 @@ func MultipleRecipeBFS(recipe *scraper.Recipe, start string, numRecipe int) scra
 				}
 
 				for i, combination := range combinations {
-					if i > 1 {
-						break
+					if i > 0 {
+						mutex.Lock()
+						if currNum >= numRecipe {
+							mutex.Unlock()
+							break
+						} else{
+							currNum++
+						}
+						mutex.Unlock()
 					}
 					first, second := combination.First(), combination.Second()
 					node := &scraper.TreeNode{Name: "+"}
@@ -78,7 +82,6 @@ func MultipleRecipeBFS(recipe *scraper.Recipe, start string, numRecipe int) scra
 		}
 		wg.Wait()
 		queue = currentQueue
-		depth++
 	}
 
 	// Kembalikan pohon resep yang sudah dibangun, dimulai dari root.
