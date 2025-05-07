@@ -6,6 +6,22 @@ definitions:
       status:
         type: string
     type: object
+  scraper.TreeNode:
+    properties:
+      children:
+        items:
+          $ref: '#/definitions/scraper.TreeNode'
+        type: array
+      name:
+        type: string
+    type: object
+  search.SearchResponse:
+    properties:
+      message:
+        type: string
+      result:
+        $ref: '#/definitions/scraper.TreeNode'
+    type: object
 info:
   contact: {}
 paths:
@@ -24,4 +40,56 @@ paths:
       summary: Health Check
       tags:
       - Health
+  /search/bfs:
+    get:
+      consumes:
+      - application/json
+      description: Search the recipe of elements using BFS
+      parameters:
+      - description: Query parameter
+        in: query
+        name: q
+        required: true
+        type: string
+      - default: "1"
+        description: Number of recipes to return
+        in: query
+        name: num
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/search.SearchResponse'
+      summary: BFS search handler
+      tags:
+      - Search
+  /search/dfs:
+    get:
+      consumes:
+      - application/json
+      description: Search the recipe of elements using DFS
+      parameters:
+      - description: Query parameter
+        in: query
+        name: q
+        required: true
+        type: string
+      - default: "1"
+        description: Number of recipes to return
+        in: query
+        name: num
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/search.SearchResponse'
+      summary: DFS search handler
+      tags:
+      - Search
 swagger: "2.0"

@@ -35,19 +35,19 @@ clean:
 .PHONY: up-dev
 up-dev:
 	@echo "Running docker compose..."
-	@docker compose --env-file .env.dev -f $(DOCKER_DIR)/docker-compose.dev.yaml up --build -d
+	@docker compose --env-file $(DOCKER_DIR)/.env.dev -f $(DOCKER_DIR)/docker-compose.dev.yaml up --build -d
 
 .PHONY: down-dev
 down-dev:
 	@echo "Stopping docker compose..."
-	@docker compose --env-file .env.dev -f $(DOCKER_DIR)/docker-compose.dev.yaml down
+	@docker compose --env-file $(DOCKER_DIR)/.env.dev -f $(DOCKER_DIR)/docker-compose.dev.yaml down
 
 .PHONY: up-prod
 up-prod:
 	@echo "Running docker compose..."
-	@docker compose --env-file .env.prod -f $(DOCKER_DIR)/docker-compose.prod.yaml up --build -d
+	@docker compose --env-file $(DOCKER_DIR)/.env.prod -f $(DOCKER_DIR)/docker-compose.prod.yaml up --build -d
 
 .PHONY: down-prod
 down-prod:
 	@echo "Stopping docker compose..."
-	@docker compose --env-file .env.prod -f $(DOCKER_DIR)/docker-compose.prod.yaml down
+	@docker compose --env-file $(DOCKER_DIR)/.env.prod -f $(DOCKER_DIR)/docker-compose.prod.yaml down
