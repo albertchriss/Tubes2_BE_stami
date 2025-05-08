@@ -6,24 +6,27 @@ import (
 	"github.com/albertchriss/Tubes2_BE_stami/internal/core"
 	"github.com/albertchriss/Tubes2_BE_stami/internal/scraper"
 	"github.com/albertchriss/Tubes2_BE_stami/internal/utils"
+	"github.com/albertchriss/Tubes2_BE_stami/internal/app/socket"
 )
 
 type Service interface {
-	BFSSearch(query string, numRecipe int) scraper.TreeNode
-	DFSSearch(query string, numRecipe int) scraper.TreeNode
+	BFSSearch(query string, numRecipe int, liveUpdate bool) scraper.TreeNode
+	DFSSearch(query string, numRecipe int, liveUpdate bool) scraper.TreeNode
 }
 
 type service struct {
-	appCtx *core.AppContext
+	appCtx    *core.AppContext
+	wsManager *socket.ClientManager
 }
 
-func NewService(appCtx *core.AppContext) *service {
+func NewService(appCtx *core.AppContext, wsManager *socket.ClientManager) *service {
 	return &service{
-		appCtx: appCtx,
+		appCtx:    appCtx,
+		wsManager: wsManager,
 	}
 }
 
-func (s *service) BFSSearch(query string, numRecipe int) scraper.TreeNode {
+func (s *service) BFSSearch(query string, numRecipe int, liveUpdate bool) scraper.TreeNode {
 	log.Println("Performing BFS search for query:", query)
 	recipe := s.appCtx.Config.RecipeTree
 	if recipe == nil {
@@ -37,14 +40,14 @@ func (s *service) BFSSearch(query string, numRecipe int) scraper.TreeNode {
 
 	if numRecipe > 1 {
 		log.Println("Performing BFS for multiple recipes")
-		return utils.MultipleRecipeBFS(recipe, query, numRecipe)
+		return utils.MultipleRecipeBFS(recipe, query, numRecipe, liveUpdate, s.wsManager)
 	} else {
 		log.Println("Performing BFS for single recipe")
-		return utils.SingleRecipeBFS(recipe, query)
+		return utils.SingleRecipeBFS(recipe, query, liveUpdate, s.wsManager)
 	}
 }
 
-func (s *service) DFSSearch(query string, numRecipe int) scraper.TreeNode {
+func (s *service) DFSSearch(query string, numRecipe int, liveUpdate bool) scraper.TreeNode {
 	log.Println("Performing DFS search for query:", query)
 	recipe := s.appCtx.Config.RecipeTree
 	if recipe == nil {

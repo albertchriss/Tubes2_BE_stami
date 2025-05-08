@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/albertchriss/Tubes2_BE_stami/internal/api"
 	"github.com/albertchriss/Tubes2_BE_stami/internal/core"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,6 +20,16 @@ func Run() {
 	handlers := api.InitHandlers(&appCtx)
 
 	r := gin.Default()
+
+	config := cors.DefaultConfig()
+	// Izinkan origin frontend Anda. Untuk pengembangan, bisa localhost:3000
+	config.AllowOrigins = []string{"http://localhost:3000"}
+	// Metode HTTP yang diizinkan
+	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
+	// Header HTTP yang diizinkan
+	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
+
+	r.Use(cors.New(config))
 
 	api.RegisterRoutes(r, handlers, &appCtx)
 
