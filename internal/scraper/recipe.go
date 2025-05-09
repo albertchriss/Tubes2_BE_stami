@@ -87,7 +87,7 @@ func (recipe *Recipe) SortRecipeChildren(tier *Tier) {
 			first := combination.First()
 			second := combination.Second()
 
-			if (*tier)[first] > (*tier)[key] || ((*tier)[second] > (*tier)[key]) {
+			if (*tier)[first] >= (*tier)[key] || ((*tier)[second] >= (*tier)[key]) {
 				continue
 			}
 
