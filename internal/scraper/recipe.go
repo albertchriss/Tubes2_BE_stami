@@ -86,6 +86,11 @@ func (recipe *Recipe) SortRecipeChildren(tier *Tier) {
 
 			first := combination.First()
 			second := combination.Second()
+
+			if (*tier)[first] > (*tier)[key] || ((*tier)[second] > (*tier)[key]) {
+				continue
+			}
+
 			maks := max((*tier)[first], (*tier)[second])
 			mini := min((*tier)[first], (*tier)[second])
 			value = append(value, []int{maks, mini})
