@@ -29,7 +29,6 @@ func Run() {
 	handlers := api.InitHandlers(&appCtx)
 
 	r.Use(cors.New(corsConfig))
-	
 	api.RegisterRoutes(r, handlers, &appCtx)
 
 	r.Run(cfg.AppAddress)

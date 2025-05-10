@@ -121,7 +121,11 @@ func (recipe *Recipe) SortRecipeChildren(tier *Tier) {
 				sortedCombs[i] = newCombs[index]
 			}
 			newCombs = sortedCombs
+			(*recipe)[key] = newCombs
+		} else {
+			delete(*recipe, key)
 		}
-		(*recipe)[key] = newCombs
 	}
+	
+
 }

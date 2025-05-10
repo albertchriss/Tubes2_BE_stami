@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/albertchriss/Tubes2_BE_stami/internal/app/socket"
 	"github.com/albertchriss/Tubes2_BE_stami/internal/core"
 	"github.com/albertchriss/Tubes2_BE_stami/internal/scraper"
 	"github.com/gin-gonic/gin"
@@ -28,14 +29,16 @@ type BidirectionalSearchResponse struct {
 }
 
 type Handler struct {
-	service Service
-	AppCtx  *core.AppContext
+	service   Service
+	AppCtx    *core.AppContext
+  wsManager *socket.ClientManager
 }
 
-func NewHandler(service Service, appCtx *core.AppContext) *Handler {
+func NewHandler(service Service, appCtx *core.AppContext, wsManager *socket.ClientManager) *Handler {
 	return &Handler{
-		service: service,
-		AppCtx:  appCtx,
+		service:   service,
+		AppCtx:    appCtx,
+    wsManager: wsManager,
 	}
 }
 
@@ -47,6 +50,7 @@ func NewHandler(service Service, appCtx *core.AppContext) *Handler {
 // @Produce json
 // @Param q query string true "Query parameter"
 // @Param num query string false "Number of recipes to return" default(1)
+// @Param live query string false "Live update" default(false)
 // @Success 200 {object} SearchResponse
 // @Router /search/bfs [get]
 func (h *Handler) BFSSearchHandler(c *gin.Context) {
@@ -58,10 +62,7 @@ func (h *Handler) BFSSearchHandler(c *gin.Context) {
 		return
 	}
 
-	numRecipe := c.Query("num")
-	if numRecipe == "" {
-		numRecipe = "1"
-	}
+	numRecipe := c.DefaultQuery("num", "1")
 	numRecipeInt, err := strconv.Atoi(numRecipe)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, SearchResponse{
@@ -77,7 +78,16 @@ func (h *Handler) BFSSearchHandler(c *gin.Context) {
 		return
 	}
 
-	res := h.service.BFSSearch(query, numRecipeInt)
+	liveUpdate := c.DefaultQuery("live", "false")
+	liveUpdateBool, err := strconv.ParseBool(liveUpdate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, SearchResponse{
+			Message: "live parameter must be a boolean",
+		})
+		return
+	}
+
+	res := h.service.BFSSearch(query, numRecipeInt, liveUpdateBool)
 	c.JSON(http.StatusOK, SearchResponse{
 		Message: "BFS search completed",
 		Result:  res,
@@ -92,6 +102,7 @@ func (h *Handler) BFSSearchHandler(c *gin.Context) {
 // @Produce json
 // @Param q query string true "Query parameter"
 // @Param num query string false "Number of recipes to return" default(1)
+// @Param live query string false "Live update" default(false)
 // @Success 200 {object} SearchResponse
 // @Router /search/dfs [get]
 func (h *Handler) DFSSearchHandler(c *gin.Context) {
@@ -103,10 +114,7 @@ func (h *Handler) DFSSearchHandler(c *gin.Context) {
 		return
 	}
 
-	numRecipe := c.Query("num")
-	if numRecipe == "" {
-		numRecipe = "1"
-	}
+	numRecipe := c.DefaultQuery("num", "1")
 	numRecipeInt, err := strconv.Atoi(numRecipe)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, SearchResponse{
@@ -122,7 +130,16 @@ func (h *Handler) DFSSearchHandler(c *gin.Context) {
 		return
 	}
 
-	res := h.service.DFSSearch(query, numRecipeInt)
+	liveUpdate := c.DefaultQuery("live", "false")
+	liveUpdateBool, err := strconv.ParseBool(liveUpdate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, SearchResponse{
+			Message: "live parameter must be a boolean",
+		})
+		return
+	}
+
+	res := h.service.DFSSearch(query, numRecipeInt, liveUpdateBool)
 	c.JSON(http.StatusOK, SearchResponse{
 		Message: "DFS search completed",
 		Result:  res,
