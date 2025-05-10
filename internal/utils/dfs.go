@@ -60,7 +60,7 @@ func MultipleRecipeHelper(recipe *scraper.Recipe, root *scraper.TreeNode, name s
 
 	mutex.Lock()
 	if visited[name] {
-		// mutex.Unlock()
+		mutex.Unlock()
 		return
 	}
 	visited[name] = true
