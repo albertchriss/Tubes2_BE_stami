@@ -99,11 +99,17 @@ paths:
         name: q
         required: true
         type: string
+      - default: "1"
+        description: Chooses the Nth found meeting node (sorted) to construct the
+          path
+        in: query
+        name: num
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: Successful search operation
+          description: Successful search operation.
           schema:
             $ref: '#/definitions/search.SearchResponse'
       summary: Bidirectional search handler

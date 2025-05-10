@@ -120,11 +120,18 @@ const docTemplate = `{
                         "name": "q",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "1",
+                        "description": "Chooses the Nth found meeting node (sorted) to construct the path",
+                        "name": "num",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful search operation",
+                        "description": "Successful search operation.",
                         "schema": {
                             "$ref": "#/definitions/search.SearchResponse"
                         }

@@ -129,7 +129,8 @@ func (h *Handler) DFSSearchHandler(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param q query string true "Target element to search for"
-// @Success 200 {object} SearchResponse "Successful search operation"
+// @Param num query string false "Chooses the Nth found meeting node (sorted) to construct the path" default(1)
+// @Success 200 {object} SearchResponse "Successful search operation."
 // @Router /search/bidirectional [get]
 func (h *Handler) BidirectionalSearchHandler(c *gin.Context) {
 	query := c.Query("q")
@@ -140,7 +141,16 @@ func (h *Handler) BidirectionalSearchHandler(c *gin.Context) {
 		return
 	}
 
-	res := h.service.BidirectionalSearch(query)
+	numChoiceStr := c.DefaultQuery("num", "1")
+	numChoiceInt, err := strconv.Atoi(numChoiceStr)
+	if err != nil || numChoiceInt < 1 {
+		c.JSON(http.StatusBadRequest, SearchResponse{
+			Message: "num parameter must be a positive integer",
+		})
+		return
+	}
+
+	res := h.service.BidirectionalSearch(query, numChoiceInt)
 	c.JSON(http.StatusOK, SearchResponse{
 		Message: "Bidirectional search completed",
 		Result:  res,
