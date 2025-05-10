@@ -9,7 +9,8 @@ import (
 )
 
 func SingleRecipeBFS(recipe *scraper.Recipe, start string, liveUpdate bool, wsManager *socket.ClientManager) scraper.TreeNode {
-	root := scraper.TreeNode{Name: start}
+	id := 0
+	root := scraper.TreeNode{Name: start, Id: id}
 	if liveUpdate {
 		wsManager.BroadcastNode(root)
 	}
@@ -25,11 +26,14 @@ func SingleRecipeBFS(recipe *scraper.Recipe, start string, liveUpdate bool, wsMa
 		combinations := (*recipe)[currNode.Name]
 		next := combinations[0]
 		first, second := next.First(), next.Second()
-		node := &scraper.TreeNode{Name: "+"}
+		id++
+		node := &scraper.TreeNode{Name: "+", Id: id}
+		id++
 		node.Children = []scraper.TreeNode{
-			{Name: first},
-			{Name: second},
+			{Name: first, Id: id},
+			{Name: second, Id: id + 1},
 		}
+		id++
 		currNode.Children = append(currNode.Children, *node)
 		if liveUpdate {
 			time.Sleep(500 * time.Millisecond)
@@ -42,9 +46,9 @@ func SingleRecipeBFS(recipe *scraper.Recipe, start string, liveUpdate bool, wsMa
 }
 
 func MultipleRecipeBFS(recipe *scraper.Recipe, start string, numRecipe int, liveUpdate bool, wsManager *socket.ClientManager) scraper.TreeNode {
-
+	id := 0
 	// Buat node root untuk elemen target
-	root := scraper.TreeNode{Name: start}
+	root := scraper.TreeNode{Name: start, Id: id}
 	if liveUpdate {
 		wsManager.BroadcastNode(root)
 	}
@@ -80,11 +84,16 @@ func MultipleRecipeBFS(recipe *scraper.Recipe, start string, numRecipe int, live
 						mutex.Unlock()
 					}
 					first, second := combination.First(), combination.Second()
-					node := &scraper.TreeNode{Name: "+"}
+					mutex.Lock()
+					id++
+					node := &scraper.TreeNode{Name: "+", Id: id}
+					id++
 					node.Children = []scraper.TreeNode{
-						{Name: first},
-						{Name: second},
+						{Name: first, Id: id},
+						{Name: second, Id: id + 1},
 					}
+					id++
+					mutex.Unlock()
 					currNode.Children = append(currNode.Children, *node)
 
 					if liveUpdate {

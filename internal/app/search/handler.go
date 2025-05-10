@@ -22,8 +22,8 @@ type SearchResponse struct {
 }
 
 type BidirectionalSearchResponse struct {
-	Message         string                       `json:"message"`
-	Result          scraper.BidirectionalResult  `json:"result"`
+	Message string                      `json:"message"`
+	Result  scraper.BidirectionalResult `json:"result"`
 	// NodesVisited    int                          `json:"nodes_visited"`
 	// TimeTaken       string                       `json:"time_taken"`
 }
@@ -31,14 +31,14 @@ type BidirectionalSearchResponse struct {
 type Handler struct {
 	service   Service
 	AppCtx    *core.AppContext
-  wsManager *socket.ClientManager
+	wsManager *socket.ClientManager
 }
 
 func NewHandler(service Service, appCtx *core.AppContext, wsManager *socket.ClientManager) *Handler {
 	return &Handler{
 		service:   service,
 		AppCtx:    appCtx,
-    wsManager: wsManager,
+		wsManager: wsManager,
 	}
 }
 
