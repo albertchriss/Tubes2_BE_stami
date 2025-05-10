@@ -3,10 +3,10 @@ package search
 import (
 	"log"
 
+	"github.com/albertchriss/Tubes2_BE_stami/internal/app/socket"
 	"github.com/albertchriss/Tubes2_BE_stami/internal/core"
 	"github.com/albertchriss/Tubes2_BE_stami/internal/scraper"
 	"github.com/albertchriss/Tubes2_BE_stami/internal/utils"
-	"github.com/albertchriss/Tubes2_BE_stami/internal/app/socket"
 )
 
 type Service interface {
@@ -59,11 +59,11 @@ func (s *service) DFSSearch(query string, numRecipe int, liveUpdate bool) scrape
 		return scraper.TreeNode{Name: "Query not found in recipe tree"}
 	}
 
-	if numRecipe == 1 {
-		log.Println("Performing DFS for single recipe")
-		return utils.SingleRecipeDFS(recipe, query)
-	} else {
+	if numRecipe > 1 {
 		log.Println("Performing DFS for multiple recipes")
-		return utils.MultipleRecipeDFS(recipe, query, numRecipe)
+		return utils.MultipleRecipeDFS(recipe, query, numRecipe, liveUpdate, s.wsManager)
+	} else {
+		log.Println("Performing DFS for single recipe")
+		return utils.SingleRecipeDFS(recipe, query, liveUpdate, s.wsManager)
 	}
 }

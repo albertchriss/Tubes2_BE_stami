@@ -123,7 +123,7 @@ func (h *Handler) DFSSearchHandler(c *gin.Context) {
 		return
 	}
 
-	res := h.service.BFSSearch(query, numRecipeInt, liveUpdateBool)
+	res := h.service.DFSSearch(query, numRecipeInt, liveUpdateBool)
 	c.JSON(http.StatusOK, SearchResponse{
 		Message: "DFS search completed",
 		Result:  res,
