@@ -6,17 +6,6 @@ definitions:
       status:
         type: string
     type: object
-  scraper.BidirectionalResult:
-    properties:
-      backward_tree:
-        $ref: '#/definitions/scraper.TreeNode'
-      forward_tree:
-        $ref: '#/definitions/scraper.TreeNode'
-      meeting_node_name:
-        type: string
-      path_found:
-        type: boolean
-    type: object
   scraper.TreeNode:
     properties:
       children:
@@ -25,13 +14,6 @@ definitions:
         type: array
       name:
         type: string
-    type: object
-  search.BidirectionalSearchResponse:
-    properties:
-      message:
-        type: string
-      result:
-        $ref: '#/definitions/scraper.BidirectionalResult'
     type: object
   search.ElementResponse:
     properties:
@@ -110,9 +92,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Search the recipe of elements using Bidirectional Search. Returns
-        two trees representing the search paths from base elements and from the target
-        element, meeting at a common node.
+      description: Search the recipe of elements using Bidirectional Search.
       parameters:
       - description: Target element to search for
         in: query
@@ -125,7 +105,7 @@ paths:
         "200":
           description: Successful search operation
           schema:
-            $ref: '#/definitions/search.BidirectionalSearchResponse'
+            $ref: '#/definitions/search.SearchResponse'
       summary: Bidirectional search handler
       tags:
       - Search

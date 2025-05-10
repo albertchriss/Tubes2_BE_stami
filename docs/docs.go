@@ -102,7 +102,7 @@ const docTemplate = `{
         },
         "/search/bidirectional": {
             "get": {
-                "description": "Search the recipe of elements using Bidirectional Search. Returns two trees representing the search paths from base elements and from the target element, meeting at a common node.",
+                "description": "Search the recipe of elements using Bidirectional Search.",
                 "consumes": [
                     "application/json"
                 ],
@@ -126,7 +126,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successful search operation",
                         "schema": {
-                            "$ref": "#/definitions/search.BidirectionalSearchResponse"
+                            "$ref": "#/definitions/search.SearchResponse"
                         }
                     }
                 }
@@ -184,23 +184,6 @@ const docTemplate = `{
                 }
             }
         },
-        "scraper.BidirectionalResult": {
-            "type": "object",
-            "properties": {
-                "backward_tree": {
-                    "$ref": "#/definitions/scraper.TreeNode"
-                },
-                "forward_tree": {
-                    "$ref": "#/definitions/scraper.TreeNode"
-                },
-                "meeting_node_name": {
-                    "type": "string"
-                },
-                "path_found": {
-                    "type": "boolean"
-                }
-            }
-        },
         "scraper.TreeNode": {
             "type": "object",
             "properties": {
@@ -212,17 +195,6 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
-                }
-            }
-        },
-        "search.BidirectionalSearchResponse": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                },
-                "result": {
-                    "$ref": "#/definitions/scraper.BidirectionalResult"
                 }
             }
         },

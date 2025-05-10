@@ -20,13 +20,6 @@ type SearchResponse struct {
 	Result  scraper.TreeNode `json:"result"`
 }
 
-type BidirectionalSearchResponse struct {
-	Message         string                       `json:"message"`
-	Result          scraper.BidirectionalResult  `json:"result"`
-	// NodesVisited    int                          `json:"nodes_visited"`
-	// TimeTaken       string                       `json:"time_taken"`
-}
-
 type Handler struct {
 	service Service
 	AppCtx  *core.AppContext
@@ -131,24 +124,24 @@ func (h *Handler) DFSSearchHandler(c *gin.Context) {
 
 // BidirectionalSearchHandler godoc
 // @Summary Bidirectional search handler
-// @Description Search the recipe of elements using Bidirectional Search. Returns two trees representing the search paths from base elements and from the target element, meeting at a common node.
+// @Description Search the recipe of elements using Bidirectional Search.
 // @Tags Search
 // @Accept json
 // @Produce json
 // @Param q query string true "Target element to search for"
-// @Success 200 {object} BidirectionalSearchResponse "Successful search operation"
+// @Success 200 {object} SearchResponse "Successful search operation"
 // @Router /search/bidirectional [get]
 func (h *Handler) BidirectionalSearchHandler(c *gin.Context) {
 	query := c.Query("q")
 	if query == "" {
-		c.JSON(http.StatusBadRequest, BidirectionalSearchResponse{
+		c.JSON(http.StatusBadRequest, SearchResponse{
 			Message: "Query parameter is required",
 		})
 		return
 	}
 
 	res := h.service.BidirectionalSearch(query)
-	c.JSON(http.StatusOK, BidirectionalSearchResponse{
+	c.JSON(http.StatusOK, SearchResponse{
 		Message: "Bidirectional search completed",
 		Result:  res,
 	})
