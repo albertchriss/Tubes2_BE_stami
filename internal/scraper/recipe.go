@@ -35,15 +35,16 @@ type Tier map[string]int
 // TreeNode is the struct for frontend
 // representation of the recipe tree.
 type TreeNode struct {
+	Id       int        `json:"id"`
 	Name     string     `json:"name"`
 	Children []TreeNode `json:"children"`
 }
 
 type BidirectionalResult struct {
-    ForwardTree     TreeNode `json:"forward_tree"`
-    BackwardTree    TreeNode `json:"backward_tree"`
-    MeetingNodeName string   `json:"meeting_node_name"`
-    PathFound       bool     `json:"path_found"`
+	ForwardTree     TreeNode `json:"forward_tree"`
+	BackwardTree    TreeNode `json:"backward_tree"`
+	MeetingNodeName string   `json:"meeting_node_name"`
+	PathFound       bool     `json:"path_found"`
 }
 
 func JsonToRecipe(filename string) *Recipe {
@@ -123,9 +124,10 @@ func (recipe *Recipe) SortRecipeChildren(tier *Tier) {
 			newCombs = sortedCombs
 			(*recipe)[key] = newCombs
 		} else {
-			delete(*recipe, key)
+			if !IsBaseElement(key) {
+				delete(*recipe, key)
+			}
 		}
 	}
-	
 
 }
