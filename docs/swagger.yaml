@@ -33,6 +33,13 @@ definitions:
       result:
         $ref: '#/definitions/scraper.BidirectionalResult'
     type: object
+  search.ElementResponse:
+    properties:
+      label:
+        type: string
+      value:
+        type: string
+    type: object
   search.SearchResponse:
     properties:
       message:
@@ -43,6 +50,21 @@ definitions:
 info:
   contact: {}
 paths:
+  /elements:
+    get:
+      description: Get a list of all available elements
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/search.ElementResponse'
+            type: array
+      summary: Get all elements
+      tags:
+      - Elements
   /health:
     get:
       consumes:

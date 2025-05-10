@@ -15,6 +15,29 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/elements": {
+            "get": {
+                "description": "Get a list of all available elements",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Elements"
+                ],
+                "summary": "Get all elements",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/search.ElementResponse"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "description": "Check if the application is running",
@@ -200,6 +223,17 @@ const docTemplate = `{
                 },
                 "result": {
                     "$ref": "#/definitions/scraper.BidirectionalResult"
+                }
+            }
+        },
+        "search.ElementResponse": {
+            "type": "object",
+            "properties": {
+                "label": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
                 }
             }
         },

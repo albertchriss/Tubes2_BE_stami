@@ -2,11 +2,18 @@ package search
 
 import (
 	"net/http"
+	"sort"
 	"strconv"
 
+	"github.com/albertchriss/Tubes2_BE_stami/internal/core"
 	"github.com/albertchriss/Tubes2_BE_stami/internal/scraper"
 	"github.com/gin-gonic/gin"
 )
+
+type ElementResponse struct {
+	Value string `json:"value"`
+	Label string `json:"label"`
+}
 
 type SearchResponse struct {
 	Message string           `json:"message"`
@@ -22,11 +29,13 @@ type BidirectionalSearchResponse struct {
 
 type Handler struct {
 	service Service
+	AppCtx  *core.AppContext
 }
 
-func NewHandler(service Service) *Handler {
+func NewHandler(service Service, appCtx *core.AppContext) *Handler {
 	return &Handler{
 		service: service,
+		AppCtx:  appCtx,
 	}
 }
 
@@ -143,4 +152,30 @@ func (h *Handler) BidirectionalSearchHandler(c *gin.Context) {
 		Message: "Bidirectional search completed",
 		Result:  res,
 	})
+}
+
+// GetElementsHandler godoc
+// @Summary Get all elements
+// @Description Get a list of all available elements
+// @Tags Elements
+// @Produce json
+// @Success 200 {array} ElementResponse
+// @Router /elements [get]
+func (h *Handler) GetElementsHandler(c *gin.Context) {
+	tierData := h.AppCtx.Config.TierMap
+	if tierData == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Tier data not loaded"})
+		return
+	}
+
+	var elements []ElementResponse
+	for elementName := range *tierData {
+		elements = append(elements, ElementResponse{Value: elementName, Label: elementName})
+	}
+
+	sort.Slice(elements, func(i, j int) bool {
+		return elements[i].Label < elements[j].Label
+	})
+
+	c.JSON(http.StatusOK, elements)
 }
