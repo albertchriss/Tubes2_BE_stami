@@ -10,12 +10,11 @@ import (
 
 func SingleRecipeBFS(recipe *scraper.Recipe, start string, liveUpdate bool, wsManager *socket.ClientManager) scraper.TreeNode {
 	root := scraper.TreeNode{Name: start}
+	if liveUpdate {
+		wsManager.BroadcastNode(root)
+	}
 	queue := []*scraper.TreeNode{&root}
 	for len(queue) > 0 {
-		if liveUpdate {
-			wsManager.BroadcastNode(root)
-			time.Sleep(500 * time.Millisecond) 
-		}
 
 		currNode := queue[0]
 		queue = queue[1:]
@@ -32,6 +31,10 @@ func SingleRecipeBFS(recipe *scraper.Recipe, start string, liveUpdate bool, wsMa
 			{Name: second},
 		}
 		currNode.Children = append(currNode.Children, *node)
+		if liveUpdate {
+			time.Sleep(500 * time.Millisecond)
+			wsManager.BroadcastNode(root)
+		}
 		queue = append(queue, &node.Children[0], &node.Children[1])
 	}
 
@@ -85,10 +88,10 @@ func MultipleRecipeBFS(recipe *scraper.Recipe, start string, numRecipe int, live
 					currNode.Children = append(currNode.Children, *node)
 
 					if liveUpdate {
+						time.Sleep(500 * time.Millisecond) // Tambahkan delay 100ms
 						mutex.Lock()
 						wsManager.BroadcastNode(root)
 						mutex.Unlock()
-						time.Sleep(500 * time.Millisecond) // Tambahkan delay 100ms
 					}
 
 					mutex.Lock()
