@@ -14,7 +14,8 @@ func RegisterRoutes(r *gin.Engine, handlers *Handlers, appCtx *core.AppContext) 
 	{
 		searchGroup.GET("/bfs", handlers.SearchHandler.BFSSearchHandler)
 		searchGroup.GET("/dfs", handlers.SearchHandler.DFSSearchHandler)
+		searchGroup.GET("/bidirectional", handlers.SearchHandler.BidirectionalSearchHandler)
 	}
 	r.GET("/ws", handlers.SocketHandler.WebSocketConnectHandler)
-
+	r.GET("/elements", handlers.SearchHandler.GetElementsHandler)
 }

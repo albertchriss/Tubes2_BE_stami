@@ -33,7 +33,7 @@ func InitHandlers(appCtx *core.AppContext) *Handlers {
 	socketHandler := socket.NewHandler(socketClientManager)
 
 	searchService := search.NewService(appCtx, socketClientManager)
-	searchHandler := search.NewHandler(searchService, socketClientManager)
+	searchHandler := search.NewHandler(searchService, appCtx, socketClientManager)
 
 	return &Handlers{
 		DocsHandler:   docsHandler,
