@@ -39,6 +39,13 @@ type TreeNode struct {
 	Children []TreeNode `json:"children"`
 }
 
+type BidirectionalResult struct {
+    ForwardTree     TreeNode `json:"forward_tree"`
+    BackwardTree    TreeNode `json:"backward_tree"`
+    MeetingNodeName string   `json:"meeting_node_name"`
+    PathFound       bool     `json:"path_found"`
+}
+
 func JsonToRecipe(filename string) *Recipe {
 	var result Recipe
 	file, err := os.ReadFile(filename)

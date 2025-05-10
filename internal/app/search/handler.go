@@ -2,24 +2,40 @@ package search
 
 import (
 	"net/http"
+	"sort"
 	"strconv"
 
+	"github.com/albertchriss/Tubes2_BE_stami/internal/core"
 	"github.com/albertchriss/Tubes2_BE_stami/internal/scraper"
 	"github.com/gin-gonic/gin"
 )
+
+type ElementResponse struct {
+	Value string `json:"value"`
+	Label string `json:"label"`
+}
 
 type SearchResponse struct {
 	Message string           `json:"message"`
 	Result  scraper.TreeNode `json:"result"`
 }
 
-type Handler struct {
-	service Service
+type BidirectionalSearchResponse struct {
+	Message         string                       `json:"message"`
+	Result          scraper.BidirectionalResult  `json:"result"`
+	// NodesVisited    int                          `json:"nodes_visited"`
+	// TimeTaken       string                       `json:"time_taken"`
 }
 
-func NewHandler(service Service) *Handler {
+type Handler struct {
+	service Service
+	AppCtx  *core.AppContext
+}
+
+func NewHandler(service Service, appCtx *core.AppContext) *Handler {
 	return &Handler{
 		service: service,
+		AppCtx:  appCtx,
 	}
 }
 
@@ -111,4 +127,55 @@ func (h *Handler) DFSSearchHandler(c *gin.Context) {
 		Message: "DFS search completed",
 		Result:  res,
 	})
+}
+
+// BidirectionalSearchHandler godoc
+// @Summary Bidirectional search handler
+// @Description Search the recipe of elements using Bidirectional Search. Returns two trees representing the search paths from base elements and from the target element, meeting at a common node.
+// @Tags Search
+// @Accept json
+// @Produce json
+// @Param q query string true "Target element to search for"
+// @Success 200 {object} BidirectionalSearchResponse "Successful search operation"
+// @Router /search/bidirectional [get]
+func (h *Handler) BidirectionalSearchHandler(c *gin.Context) {
+	query := c.Query("q")
+	if query == "" {
+		c.JSON(http.StatusBadRequest, BidirectionalSearchResponse{
+			Message: "Query parameter is required",
+		})
+		return
+	}
+
+	res := h.service.BidirectionalSearch(query)
+	c.JSON(http.StatusOK, BidirectionalSearchResponse{
+		Message: "Bidirectional search completed",
+		Result:  res,
+	})
+}
+
+// GetElementsHandler godoc
+// @Summary Get all elements
+// @Description Get a list of all available elements
+// @Tags Elements
+// @Produce json
+// @Success 200 {array} ElementResponse
+// @Router /elements [get]
+func (h *Handler) GetElementsHandler(c *gin.Context) {
+	tierData := h.AppCtx.Config.TierMap
+	if tierData == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Tier data not loaded"})
+		return
+	}
+
+	var elements []ElementResponse
+	for elementName := range *tierData {
+		elements = append(elements, ElementResponse{Value: elementName, Label: elementName})
+	}
+
+	sort.Slice(elements, func(i, j int) bool {
+		return elements[i].Label < elements[j].Label
+	})
+
+	c.JSON(http.StatusOK, elements)
 }

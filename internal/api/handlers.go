@@ -27,7 +27,7 @@ func InitHandlers(appCtx *core.AppContext) *Handlers {
 	healthHandler := health.NewHandler()
 
 	searchService := search.NewService(appCtx)
-	searchHandler := search.NewHandler(searchService)
+	searchHandler := search.NewHandler(searchService, appCtx)
 
 	return &Handlers{
 		DocsHandler:   docsHandler,
