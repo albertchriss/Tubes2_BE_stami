@@ -1,9 +1,9 @@
 package app
 
 import (
-	"github.com/albertchriss/Tubes2_BE_stami/internal/utils"
 	"github.com/albertchriss/Tubes2_BE_stami/internal/api"
 	"github.com/albertchriss/Tubes2_BE_stami/internal/core"
+	"github.com/albertchriss/Tubes2_BE_stami/internal/utils"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )

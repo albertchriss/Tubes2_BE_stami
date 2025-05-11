@@ -35,15 +35,9 @@ type Tier map[string]int
 // TreeNode is the struct for frontend
 // representation of the recipe tree.
 type TreeNode struct {
+	Id       int        `json:"id"`
 	Name     string     `json:"name"`
 	Children []TreeNode `json:"children"`
-}
-
-type BidirectionalResult struct {
-    ForwardTree     TreeNode `json:"forward_tree"`
-    BackwardTree    TreeNode `json:"backward_tree"`
-    MeetingNodeName string   `json:"meeting_node_name"`
-    PathFound       bool     `json:"path_found"`
 }
 
 func JsonToRecipe(filename string) *Recipe {
@@ -78,7 +72,7 @@ func JsonToTier(filename string) *Tier {
 func (recipe *Recipe) SortRecipeChildren(tier *Tier) {
 	for key, combinations := range *recipe {
 		newCombs := []Combination{}
-		value := []int{}
+		value := [][]int{}
 		for _, combination := range combinations {
 			_, foundFirst := (*tier)[combination.First()]
 			if !foundFirst {
@@ -93,15 +87,40 @@ func (recipe *Recipe) SortRecipeChildren(tier *Tier) {
 
 			first := combination.First()
 			second := combination.Second()
-			value = append(value, max((*tier)[first], (*tier)[second]))
+
+			if (*tier)[first] >= (*tier)[key] || ((*tier)[second] >= (*tier)[key]) {
+				continue
+			}
+
+			maks := max((*tier)[first], (*tier)[second])
+			mini := min((*tier)[first], (*tier)[second])
+			value = append(value, []int{maks, mini})
 			newCombs = append(newCombs, combination)
 		}
 		// Sort combinations based on the corresponding value
 		if len(newCombs) > 0 {
-			sort.Slice(newCombs, func(i, j int) bool {
-				return value[i] < value[j]
+			indices := make([]int, len(newCombs))
+			for k := range indices {
+				indices[k] = k
+			}
+			sort.Slice(indices, func(i, j int) bool {
+				if value[indices[i]][0] == value[indices[j]][0] {
+					return value[indices[i]][1] < value[indices[j]][1]
+				}
+
+				return value[indices[i]][0] < value[indices[j]][0]
 			})
+			sortedCombs := make([]Combination, len(newCombs))
+			for i, index := range indices {
+				sortedCombs[i] = newCombs[index]
+			}
+			newCombs = sortedCombs
 			(*recipe)[key] = newCombs
-		} 
+		} else {
+			if !IsBaseElement(key) {
+				delete(*recipe, key)
+			}
+		}
 	}
+
 }

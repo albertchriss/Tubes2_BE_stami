@@ -88,6 +88,13 @@ const docTemplate = `{
                         "description": "Number of recipes to return",
                         "name": "num",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "false",
+                        "description": "Live update",
+                        "name": "live",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -166,6 +173,13 @@ const docTemplate = `{
                         "description": "Number of recipes to return",
                         "name": "num",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "false",
+                        "description": "Live update",
+                        "name": "live",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -199,6 +213,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/scraper.TreeNode"
                     }
+                },
+                "id": {
+                    "type": "integer"
                 },
                 "name": {
                     "type": "string"

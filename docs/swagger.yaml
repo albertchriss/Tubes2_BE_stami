@@ -12,6 +12,8 @@ definitions:
         items:
           $ref: '#/definitions/scraper.TreeNode'
         type: array
+      id:
+        type: integer
       name:
         type: string
     type: object
@@ -78,6 +80,11 @@ paths:
         in: query
         name: num
         type: string
+      - default: "false"
+        description: Live update
+        in: query
+        name: live
+        type: string
       produces:
       - application/json
       responses:
@@ -130,6 +137,11 @@ paths:
         description: Number of recipes to return
         in: query
         name: num
+        type: string
+      - default: "false"
+        description: Live update
+        in: query
+        name: live
         type: string
       produces:
       - application/json

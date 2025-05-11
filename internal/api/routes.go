@@ -10,12 +10,12 @@ import (
 func RegisterRoutes(r *gin.Engine, handlers *Handlers, appCtx *core.AppContext) {
 	r.GET("/docs/*any", handlers.DocsHandler)
 	r.GET("/health", handlers.HealthHandler.HealthCheck)
-
 	searchGroup := r.Group("/search")
 	{
 		searchGroup.GET("/bfs", handlers.SearchHandler.BFSSearchHandler)
 		searchGroup.GET("/dfs", handlers.SearchHandler.DFSSearchHandler)
 		searchGroup.GET("/bidirectional", handlers.SearchHandler.BidirectionalSearchHandler)
 	}
+	r.GET("/ws", handlers.SocketHandler.WebSocketConnectHandler)
 	r.GET("/elements", handlers.SearchHandler.GetElementsHandler)
 }

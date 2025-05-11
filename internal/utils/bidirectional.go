@@ -294,7 +294,7 @@ func BidirectionalSearch(
 
 	var segMeetingToBase scraper.TreeNode
 	if scraper.IsBaseElement(meeting) {
-		segMeetingToBase = scraper.TreeNode{Name: meeting}
+		segMeetingToBase = scraper.TreeNode{}
 	} else {
 		segMeetingToBase = reconstructPathDeterministic(meeting, parentsFwd, recipe, "", false)
 	}
