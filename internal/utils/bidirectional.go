@@ -39,8 +39,8 @@ func getBaseElements(tierMap *scraper.Tier) []string {
 
 	if tierMap != nil && len(*tierMap) > 0 {
 		tempBaseElementsMap := make(map[string]bool)
-		for el, tier := range *tierMap {
-			if tier == 0 {
+		for el, tierVal := range *tierMap {
+			if tierVal == 0 {
 				tempBaseElementsMap[el] = true
 			}
 		}
@@ -57,133 +57,132 @@ func getBaseElements(tierMap *scraper.Tier) []string {
 	return knownBaseElements
 }
 
-func reconstructPathDeterministic(
-	startNodeName string,
-	parents map[string]scraper.Combination,
+func reconstructPathMultipleRecipesInternal(
+	currentNodeName string,
 	recipeData *scraper.Recipe,
-	stopAtNodeName string,
-	isSegmentToMeetingNode bool,
+	stopCondition func(name string) bool,
+	maxRecipesPerNodeToDisplay int,
+	pathVisited map[string]bool,
+	currentDepth int,
+	maxRecursiveDepth int,
 ) scraper.TreeNode {
 
-	root := scraper.TreeNode{Name: startNodeName}
-	if !isSegmentToMeetingNode && scraper.IsBaseElement(startNodeName) {
-		return root
+	rootNode := scraper.TreeNode{Name: currentNodeName}
+
+	if currentDepth > maxRecursiveDepth {
+		return rootNode
 	}
-	if isSegmentToMeetingNode && startNodeName == stopAtNodeName {
+
+	if stopCondition(currentNodeName) {
+		return rootNode
 	}
 
+	if pathVisited[currentNodeName] {
+		return rootNode
+	}
+	pathVisited[currentNodeName] = true
+	defer delete(pathVisited, currentNodeName)
 
-	queue := []*scraper.TreeNode{&root}
-	expanded := make(map[string]bool)
+	availableRecipes, recipesExist := (*recipeData)[currentNodeName]
+	if !recipesExist || len(availableRecipes) == 0 {
+		return rootNode
+	}
 
-	for head := 0; head < len(queue); head++ {
-		currNode := queue[head]
-		name := currNode.Name
+	recipesToProcess := len(availableRecipes)
+	if recipesToProcess > maxRecipesPerNodeToDisplay {
+		recipesToProcess = maxRecipesPerNodeToDisplay
+	}
 
-		if expanded[name] {
-			continue
-		}
-		expanded[name] = true
+	for i := 0; i < recipesToProcess; i++ {
+		combination := availableRecipes[i]
+		ingredient1Name := combination.First()
+		ingredient2Name := combination.Second()
 
-		if isSegmentToMeetingNode {
-			if name == stopAtNodeName && name != startNodeName {
-				continue
-			}
-		} else {
-			if scraper.IsBaseElement(name) {
-				continue
-			}
-		}
-
-		comb, ok := parents[name]
-		if !ok {
-			recipes, exists := (*recipeData)[name]
-			if !exists || len(recipes) == 0 {
-				continue
-			}
-			comb = recipes[0]
-		}
-
-		ing1, ing2 := comb.First(), comb.Second()
-		if ing1 == "" && ing2 == "" {
+		if ingredient1Name == "" && ingredient2Name == "" {
 			continue
 		}
 
-		tempChildrenForPlusNode := []scraper.TreeNode{}
-		if ing1 != "" {
-			tempChildrenForPlusNode = append(tempChildrenForPlusNode, scraper.TreeNode{Name: ing1})
+		var childrenForPlusNode []scraper.TreeNode
+		if ingredient1Name != "" {
+			child1Tree := reconstructPathMultipleRecipesInternal(ingredient1Name, recipeData, stopCondition, maxRecipesPerNodeToDisplay, pathVisited, currentDepth+1, maxRecursiveDepth)
+			childrenForPlusNode = append(childrenForPlusNode, child1Tree)
 		}
-		if ing2 != "" {
-			tempChildrenForPlusNode = append(tempChildrenForPlusNode, scraper.TreeNode{Name: ing2})
+		if ingredient2Name != "" {
+			child2Tree := reconstructPathMultipleRecipesInternal(ingredient2Name, recipeData, stopCondition, maxRecipesPerNodeToDisplay, pathVisited, currentDepth+1, maxRecursiveDepth)
+			childrenForPlusNode = append(childrenForPlusNode, child2Tree)
 		}
 
-		if len(tempChildrenForPlusNode) > 0 {
-			plusNode := scraper.TreeNode{Name: "+", Children: tempChildrenForPlusNode}
-			currNode.Children = append(currNode.Children, plusNode)
-
-			addedPlusNodeRef := &currNode.Children[len(currNode.Children)-1]
-
-			for i := range addedPlusNodeRef.Children {
-				queue = append(queue, &addedPlusNodeRef.Children[i])
-			}
+		if len(childrenForPlusNode) > 0 {
+			plusNode := scraper.TreeNode{Name: "+", Children: childrenForPlusNode}
+			rootNode.Children = append(rootNode.Children, plusNode)
 		}
 	}
-
-	return root
+	return rootNode
 }
 
 func BidirectionalSearch(
 	recipe *scraper.Recipe,
 	tierMap *scraper.Tier,
-	start string,
-	meetingNodeChoiceIndex int,
+	startElementName string,
+	maxRecipesPerNodeInTree int,
 ) scraper.TreeNode {
+
 	if recipe == nil {
 		return scraper.TreeNode{Name: "Error: Recipe data is nil."}
 	}
-	if scraper.IsBaseElement(start) {
-		return scraper.TreeNode{Name: start}
+	if scraper.IsBaseElement(startElementName) {
+		return scraper.TreeNode{Name: startElementName}
 	}
-	if _, exists := (*recipe)[start]; !exists {
-		return scraper.TreeNode{Name: fmt.Sprintf("Target element '%s' not found in recipes.", start)}
+	if _, exists := (*recipe)[startElementName]; !exists {
+		recipesForStart, hasRecipes := (*recipe)[startElementName]
+		if !hasRecipes || len(recipesForStart) == 0 {
+			return scraper.TreeNode{Name: fmt.Sprintf("Target element '%s' not found in recipes or has no defined combinations.", startElementName)}
+		}
 	}
 
-	if meetingNodeChoiceIndex < 1 {
-		meetingNodeChoiceIndex = 1
+	if maxRecipesPerNodeInTree < 1 {
+		maxRecipesPerNodeInTree = 1
 	}
 
 	visitedFwd := make(map[string]bool)
-	parentsFwd := make(map[string]scraper.Combination)
-	baseEls := getBaseElements(tierMap)
+	parentsFwd := make(map[string]scraper.Combination) 
+	baseElementsList := getBaseElements(tierMap)
 
-	if len(baseEls) == 0 {
+	if len(baseElementsList) == 0 {
 		return scraper.TreeNode{Name: "Error: No base elements found."}
 	}
 
-	currentFwd := make([]string, 0, len(baseEls))
-	for _, el := range baseEls {
+	currentFwdQueue := make([]string, 0, len(baseElementsList))
+	for _, el := range baseElementsList {
 		if !visitedFwd[el] {
 			visitedFwd[el] = true
-			currentFwd = append(currentFwd, el)
+			currentFwdQueue = append(currentFwdQueue, el)
 		}
 	}
 
 	visitedBwd := make(map[string]bool)
-	parentsBwd := make(map[string]scraper.Combination)
-	currentBwd := []string{start}
-	visitedBwd[start] = true
+	parentsBwd := make(map[string]scraper.Combination) 
+	currentBwdQueue := []string{startElementName}
+	visitedBwd[startElementName] = true
 
-	collectedMeetings := make(map[string]bool)
-	orderedMeetings := []string{}
+	collectedMeetingNodes := make(map[string]bool)
+	orderedMeetingNodes := []string{}
 
-	const maxDepth = 20
+	const maxSearchDepth = 20
+	const maxReconstructionDepth = 15
 
-	for depth := 0; depth < maxDepth; depth++ {
-		nextFwd := []string{}
-		for _, nodeFromBase := range currentFwd {
-			if visitedBwd[nodeFromBase] && !collectedMeetings[nodeFromBase] {
-				collectedMeetings[nodeFromBase] = true
-				orderedMeetings = append(orderedMeetings, nodeFromBase)
+	for depth := 0; depth < maxSearchDepth; depth++ {
+		if len(orderedMeetingNodes) > 0 && depth > 1 {
+			if len(orderedMeetingNodes) > 5 {
+				break
+			}
+		}
+
+		nextFwdQueue := []string{}
+		for _, nodeFromBase := range currentFwdQueue {
+			if visitedBwd[nodeFromBase] && !collectedMeetingNodes[nodeFromBase] {
+				collectedMeetingNodes[nodeFromBase] = true
+				orderedMeetingNodes = append(orderedMeetingNodes, nodeFromBase)
 			}
 
 			for product, combinations := range *recipe {
@@ -192,39 +191,46 @@ func BidirectionalSearch(
 				}
 				for _, comb := range combinations {
 					ing1, ing2 := comb.First(), comb.Second()
-					if (ing1 == ing2 && visitedFwd[ing1]) || (ing1 != ing2 && visitedFwd[ing1] && visitedFwd[ing2]) {
+					canBeFormed := false
+					if ing1 == ing2 {
+						if visitedFwd[ing1] {
+							canBeFormed = true
+						}
+					} else {
+						if visitedFwd[ing1] && visitedFwd[ing2] {
+							canBeFormed = true
+						}
+					}
+
+					if canBeFormed {
 						if _, ok := parentsFwd[product]; !ok {
 							parentsFwd[product] = comb
 						}
 						foundInNext := false
-						for _, item := range nextFwd {
+						for _, item := range nextFwdQueue {
 							if item == product {
 								foundInNext = true
 								break
 							}
 						}
 						if !foundInNext {
-							nextFwd = append(nextFwd, product)
+							nextFwdQueue = append(nextFwdQueue, product)
 						}
 						break
 					}
 				}
 			}
 		}
-		for _, n := range nextFwd {
+		for _, n := range nextFwdQueue {
 			visitedFwd[n] = true
 		}
-		currentFwd = nextFwd
+		currentFwdQueue = nextFwdQueue
 
-		if len(currentFwd) == 0 && len(orderedMeetings) == 0 && depth > 0 {
-		}
-
-
-		nextBwd := []string{}
-		for _, nodeToMake := range currentBwd {
-			if visitedFwd[nodeToMake] && !collectedMeetings[nodeToMake] {
-				collectedMeetings[nodeToMake] = true
-				orderedMeetings = append(orderedMeetings, nodeToMake)
+		nextBwdQueue := []string{}
+		for _, nodeToMake := range currentBwdQueue {
+			if visitedFwd[nodeToMake] && !collectedMeetingNodes[nodeToMake] {
+				collectedMeetingNodes[nodeToMake] = true
+				orderedMeetingNodes = append(orderedMeetingNodes, nodeToMake)
 			}
 
 			if scraper.IsBaseElement(nodeToMake) {
@@ -235,81 +241,89 @@ func BidirectionalSearch(
 			if !exists || len(recipesForNode) == 0 {
 				continue
 			}
-			
-			chosenComb := recipesForNode[0]
+
+			chosenCombBwd := recipesForNode[0]
 			if _, ok := parentsBwd[nodeToMake]; !ok {
-					parentsBwd[nodeToMake] = chosenComb
+				parentsBwd[nodeToMake] = chosenCombBwd
 			}
 
-
-			for _, ing := range []string{chosenComb.First(), chosenComb.Second()} {
+			for _, ing := range []string{chosenCombBwd.First(), chosenCombBwd.Second()} {
 				if ing != "" && !visitedBwd[ing] {
 					visitedBwd[ing] = true
-					foundInNext := false
-					for _, item := range nextBwd {
+					foundInNextBwd := false
+					for _, item := range nextBwdQueue {
 						if item == ing {
-							foundInNext = true
+							foundInNextBwd = true
 							break
 						}
 					}
-					if !foundInNext {
-						nextBwd = append(nextBwd, ing)
+					if !foundInNextBwd {
+						nextBwdQueue = append(nextBwdQueue, ing)
 					}
 				}
 			}
 		}
-		currentBwd = nextBwd
+		currentBwdQueue = nextBwdQueue
 
-		if len(currentBwd) == 0 && len(orderedMeetings) == 0 && depth > 0 {
-		}
-
-		if len(orderedMeetings) > 0 {
+		if len(currentFwdQueue) == 0 && len(currentBwdQueue) == 0 && depth > 1 {
 			break
 		}
+	}
 
-		if len(currentFwd) == 0 && len(currentBwd) == 0 && depth > 0 {
-		    break
+	if len(orderedMeetingNodes) == 0 {
+		stopConditionStandard := func(name string) bool {
+			return scraper.IsBaseElement(name)
 		}
+		pathVisitedStandard := make(map[string]bool)
+		return reconstructPathMultipleRecipesInternal(startElementName, recipe, stopConditionStandard, maxRecipesPerNodeInTree, pathVisitedStandard, 0, maxReconstructionDepth)
 	}
 
-	if len(orderedMeetings) == 0 {
-		return scraper.TreeNode{Name: fmt.Sprintf("No path found to '%s' (no meeting nodes discovered).", start)}
+	sort.Slice(orderedMeetingNodes, func(i, j int) bool {
+		tierI, okI := (*tierMap)[orderedMeetingNodes[i]]
+		tierJ, okJ := (*tierMap)[orderedMeetingNodes[j]]
+		if !okI {
+			tierI = maxSearchDepth + 1
+		}
+		if !okJ {
+			tierJ = maxSearchDepth + 1
+		}
+		if tierI != tierJ {
+			return tierI < tierJ
+		}
+		return orderedMeetingNodes[i] < orderedMeetingNodes[j]
+	})
+
+	chosenMeetingNode := orderedMeetingNodes[0]
+
+	stopConditionForSeg1 := func(name string) bool {
+		if name == chosenMeetingNode && name != startElementName {
+			return true
+		}
+		return scraper.IsBaseElement(name) && name != startElementName
 	}
+	pathVisitedSeg1 := make(map[string]bool)
+	segmentStartToMeeting := reconstructPathMultipleRecipesInternal(startElementName, recipe, stopConditionForSeg1, maxRecipesPerNodeInTree, pathVisitedSeg1, 0, maxReconstructionDepth)
 
-	sort.Strings(orderedMeetings)
-	
-	var meeting string
-	meetingIdx := meetingNodeChoiceIndex - 1
-
-	if meetingIdx >= 0 && meetingIdx < len(orderedMeetings) {
-		meeting = orderedMeetings[meetingIdx]
-	} else if len(orderedMeetings) > 0 { 
-		meeting = orderedMeetings[len(orderedMeetings)-1] 
+	var segmentMeetingToBase scraper.TreeNode
+	if scraper.IsBaseElement(chosenMeetingNode) {
+		segmentMeetingToBase = scraper.TreeNode{}
 	} else {
-		return scraper.TreeNode{Name: fmt.Sprintf("Critical error: No meeting nodes available after selection for '%s'.", start)}
+		stopConditionForSeg2 := func(name string) bool {
+			return scraper.IsBaseElement(name)
+		}
+		pathVisitedSeg2 := make(map[string]bool)
+		segmentMeetingToBase = reconstructPathMultipleRecipesInternal(chosenMeetingNode, recipe, stopConditionForSeg2, maxRecipesPerNodeInTree, pathVisitedSeg2, 0, maxReconstructionDepth)
 	}
 
-
-	segStartToMeeting := reconstructPathDeterministic(start, parentsBwd, recipe, meeting, true)
-
-	var segMeetingToBase scraper.TreeNode
-	if scraper.IsBaseElement(meeting) {
-		segMeetingToBase = scraper.TreeNode{}
-	} else {
-		segMeetingToBase = reconstructPathDeterministic(meeting, parentsFwd, recipe, "", false)
+	if startElementName == chosenMeetingNode {
+		segmentStartToMeeting.Children = segmentMeetingToBase.Children
+		return segmentStartToMeeting
 	}
 
-	if start == meeting {
-		segStartToMeeting.Children = segMeetingToBase.Children
-		return segStartToMeeting
-	}
-	
-	nodeToAttachChildren := findNodeInTreeBFS(&segStartToMeeting, meeting)
-	if nodeToAttachChildren == nil {
-		return scraper.TreeNode{Name: fmt.Sprintf("Error: Reconstruction failed. Meeting node '%s' not found in the first segment tree for target '%s'.", meeting, start)}
+	nodeToAttach := findNodeInTreeBFS(&segmentStartToMeeting, chosenMeetingNode)
+	if nodeToAttach != nil {
+		nodeToAttach.Children = segmentMeetingToBase.Children
 	}
 
-	nodeToAttachChildren.Children = segMeetingToBase.Children
-	
-	return segStartToMeeting
+	return segmentStartToMeeting
 }
