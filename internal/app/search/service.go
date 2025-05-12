@@ -12,7 +12,8 @@ import (
 type Service interface {
 	BFSSearch(query string, numRecipe int, liveUpdate bool) scraper.TreeNode
 	DFSSearch(query string, numRecipe int, liveUpdate bool) scraper.TreeNode
-	BidirectionalSearch(query string) scraper.BidirectionalResult
+	BidirectionalSearch(query string, numMeetingNodeChoice int) scraper.TreeNode
+
 }
 
 type service struct {
@@ -69,19 +70,15 @@ func (s *service) DFSSearch(query string, numRecipe int, liveUpdate bool) scrape
 	}
 }
 
-func (s *service) BidirectionalSearch(query string) scraper.BidirectionalResult {
-	log.Println("Performing Bidirectional search for query:", query)
+func (s *service) BidirectionalSearch(query string, numMeetingNodeChoice int) scraper.TreeNode {
+	log.Println("Performing Bidirectional search for query:", query, "meeting node choice:", numMeetingNodeChoice)
 	recipe := s.appCtx.Config.RecipeTree
 	tierMap := s.appCtx.Config.TierMap
 
 	if recipe == nil {
 		log.Println("Recipe tree is nil")
-		return scraper.BidirectionalResult{
-			ForwardTree: scraper.TreeNode{Name: "Recipe tree is nil"},
-			PathFound:   false,
-		}
+		return scraper.TreeNode{Name: "Recipe tree is nil"}
 	}
-
-	log.Println("Performing BidirectionalSearch using utils")
-	return utils.BidirectionalSearch(recipe, tierMap, query)
+	
+	return utils.BidirectionalSearch(recipe, tierMap, query, numMeetingNodeChoice)
 }

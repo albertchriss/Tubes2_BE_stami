@@ -88,6 +88,13 @@ const docTemplate = `{
                         "description": "Number of recipes to return",
                         "name": "num",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "false",
+                        "description": "Live update",
+                        "name": "live",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -102,7 +109,7 @@ const docTemplate = `{
         },
         "/search/bidirectional": {
             "get": {
-                "description": "Search the recipe of elements using Bidirectional Search. Returns two trees representing the search paths from base elements and from the target element, meeting at a common node.",
+                "description": "Search the recipe of elements using Bidirectional Search.",
                 "consumes": [
                     "application/json"
                 ],
@@ -120,13 +127,20 @@ const docTemplate = `{
                         "name": "q",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "1",
+                        "description": "Chooses the Nth found meeting node (sorted) to construct the path",
+                        "name": "num",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful search operation",
+                        "description": "Successful search operation.",
                         "schema": {
-                            "$ref": "#/definitions/search.BidirectionalSearchResponse"
+                            "$ref": "#/definitions/search.SearchResponse"
                         }
                     }
                 }
@@ -159,6 +173,13 @@ const docTemplate = `{
                         "description": "Number of recipes to return",
                         "name": "num",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "false",
+                        "description": "Live update",
+                        "name": "live",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -184,23 +205,6 @@ const docTemplate = `{
                 }
             }
         },
-        "scraper.BidirectionalResult": {
-            "type": "object",
-            "properties": {
-                "backward_tree": {
-                    "$ref": "#/definitions/scraper.TreeNode"
-                },
-                "forward_tree": {
-                    "$ref": "#/definitions/scraper.TreeNode"
-                },
-                "meeting_node_name": {
-                    "type": "string"
-                },
-                "path_found": {
-                    "type": "boolean"
-                }
-            }
-        },
         "scraper.TreeNode": {
             "type": "object",
             "properties": {
@@ -210,19 +214,11 @@ const docTemplate = `{
                         "$ref": "#/definitions/scraper.TreeNode"
                     }
                 },
+                "id": {
+                    "type": "integer"
+                },
                 "name": {
                     "type": "string"
-                }
-            }
-        },
-        "search.BidirectionalSearchResponse": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                },
-                "result": {
-                    "$ref": "#/definitions/scraper.BidirectionalResult"
                 }
             }
         },

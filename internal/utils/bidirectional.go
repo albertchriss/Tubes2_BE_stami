@@ -2,293 +2,328 @@ package utils
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/albertchriss/Tubes2_BE_stami/internal/scraper"
 )
+
+func findNodeInTreeBFS(root *scraper.TreeNode, name string) *scraper.TreeNode {
+	if root == nil {
+		return nil
+	}
+	q := []*scraper.TreeNode{root}
+
+	for len(q) > 0 {
+		curr := q[0]
+		q = q[1:]
+
+		if curr.Name == name {
+			return curr
+		}
+
+		for i := range curr.Children {
+			plusNode := &curr.Children[i]
+			if plusNode.Name == "+" {
+				for j := range plusNode.Children {
+					q = append(q, &plusNode.Children[j])
+				}
+			}
+		}
+	}
+	return nil
+}
 
 func getBaseElements(tierMap *scraper.Tier) []string {
 	var baseElements []string
 	knownBaseElements := []string{"Air", "Earth", "Fire", "Water", "Time"}
 
 	if tierMap != nil && len(*tierMap) > 0 {
-		tempBaseElements := make(map[string]bool)
-		for el, tier := range *tierMap {
-			if tier == 0 {
-				tempBaseElements[el] = true
+		tempBaseElementsMap := make(map[string]bool)
+		for el, tierVal := range *tierMap {
+			if tierVal == 0 {
+				tempBaseElementsMap[el] = true
 			}
 		}
-		if len(tempBaseElements) > 0 {
-			for el := range tempBaseElements {
+
+		if len(tempBaseElementsMap) > 0 {
+			for el := range tempBaseElementsMap {
 				baseElements = append(baseElements, el)
 			}
+			sort.Strings(baseElements)
 			return baseElements
 		}
 	}
+	sort.Strings(knownBaseElements)
 	return knownBaseElements
 }
 
-func BidirectionalSearch(recipe *scraper.Recipe, tierMap *scraper.Tier, start string) scraper.BidirectionalResult {
-	defaultResult := scraper.BidirectionalResult{PathFound: false}
+func reconstructPathMultipleRecipesInternal(
+	currentNodeName string,
+	recipeData *scraper.Recipe,
+	stopCondition func(name string) bool,
+	maxRecipesPerNodeToDisplay int,
+	pathVisited map[string]bool,
+	currentDepth int,
+	maxRecursiveDepth int,
+) scraper.TreeNode {
+
+	rootNode := scraper.TreeNode{Name: currentNodeName}
+
+	if currentDepth > maxRecursiveDepth {
+		return rootNode
+	}
+
+	if stopCondition(currentNodeName) {
+		return rootNode
+	}
+
+	if pathVisited[currentNodeName] {
+		return rootNode
+	}
+	pathVisited[currentNodeName] = true
+	defer delete(pathVisited, currentNodeName)
+
+	availableRecipes, recipesExist := (*recipeData)[currentNodeName]
+	if !recipesExist || len(availableRecipes) == 0 {
+		return rootNode
+	}
+
+	recipesToProcess := len(availableRecipes)
+	if recipesToProcess > maxRecipesPerNodeToDisplay {
+		recipesToProcess = maxRecipesPerNodeToDisplay
+	}
+
+	for i := 0; i < recipesToProcess; i++ {
+		combination := availableRecipes[i]
+		ingredient1Name := combination.First()
+		ingredient2Name := combination.Second()
+
+		if ingredient1Name == "" && ingredient2Name == "" {
+			continue
+		}
+
+		var childrenForPlusNode []scraper.TreeNode
+		if ingredient1Name != "" {
+			child1Tree := reconstructPathMultipleRecipesInternal(ingredient1Name, recipeData, stopCondition, maxRecipesPerNodeToDisplay, pathVisited, currentDepth+1, maxRecursiveDepth)
+			childrenForPlusNode = append(childrenForPlusNode, child1Tree)
+		}
+		if ingredient2Name != "" {
+			child2Tree := reconstructPathMultipleRecipesInternal(ingredient2Name, recipeData, stopCondition, maxRecipesPerNodeToDisplay, pathVisited, currentDepth+1, maxRecursiveDepth)
+			childrenForPlusNode = append(childrenForPlusNode, child2Tree)
+		}
+
+		if len(childrenForPlusNode) > 0 {
+			plusNode := scraper.TreeNode{Name: "+", Children: childrenForPlusNode}
+			rootNode.Children = append(rootNode.Children, plusNode)
+		}
+	}
+	return rootNode
+}
+
+func BidirectionalSearch(
+	recipe *scraper.Recipe,
+	tierMap *scraper.Tier,
+	startElementName string,
+	maxRecipesPerNodeInTree int,
+) scraper.TreeNode {
 
 	if recipe == nil {
-		defaultResult.ForwardTree.Name = "Error: Recipe data is nil."
-		defaultResult.BackwardTree.Name = "Error: Recipe data is nil."
-		return defaultResult
+		return scraper.TreeNode{Name: "Error: Recipe data is nil."}
 	}
-
-	_, targetExistsInRecipe := (*recipe)[start]
-	isTargetBase := scraper.IsBaseElement(start)
-
-	if !targetExistsInRecipe && !isTargetBase {
-		defaultResult.ForwardTree.Name = fmt.Sprintf("Target element '%s' not found in recipes and is not a base element.", start)
-		return defaultResult
+	if scraper.IsBaseElement(startElementName) {
+		return scraper.TreeNode{Name: startElementName}
 	}
-
-	if isTargetBase {
-		return scraper.BidirectionalResult{
-			ForwardTree:     scraper.TreeNode{Name: start},
-			BackwardTree:    scraper.TreeNode{Name: start},
-			MeetingNodeName: start,
-			PathFound:       true,
+	if _, exists := (*recipe)[startElementName]; !exists {
+		recipesForStart, hasRecipes := (*recipe)[startElementName]
+		if !hasRecipes || len(recipesForStart) == 0 {
+			return scraper.TreeNode{Name: fmt.Sprintf("Target element '%s' not found in recipes or has no defined combinations.", startElementName)}
 		}
 	}
 
-	// Inisialisasi Forward Search
-	visitedForward := make(map[string]bool)
-	parentsForward := make(map[string]scraper.Combination)
-	currentForwardLayer := make([]string, 0)
-
-	baseElementsSlice := getBaseElements(tierMap)
-	if len(baseElementsSlice) == 0 {
-		defaultResult.ForwardTree.Name = "Error: No base elements found for forward search."
-		return defaultResult
+	if maxRecipesPerNodeInTree < 1 {
+		maxRecipesPerNodeInTree = 1
 	}
-	for _, el := range baseElementsSlice {
-		if !visitedForward[el] {
-			currentForwardLayer = append(currentForwardLayer, el)
-			visitedForward[el] = true
+
+	visitedFwd := make(map[string]bool)
+	parentsFwd := make(map[string]scraper.Combination) 
+	baseElementsList := getBaseElements(tierMap)
+
+	if len(baseElementsList) == 0 {
+		return scraper.TreeNode{Name: "Error: No base elements found."}
+	}
+
+	currentFwdQueue := make([]string, 0, len(baseElementsList))
+	for _, el := range baseElementsList {
+		if !visitedFwd[el] {
+			visitedFwd[el] = true
+			currentFwdQueue = append(currentFwdQueue, el)
 		}
 	}
 
-	// Inisialisasi Backward Search
-	visitedBackward := make(map[string]bool)
-	parentsBackward := make(map[string]scraper.Combination)
-	queueBackward := make([]string, 0)
+	visitedBwd := make(map[string]bool)
+	parentsBwd := make(map[string]scraper.Combination) 
+	currentBwdQueue := []string{startElementName}
+	visitedBwd[startElementName] = true
 
-	queueBackward = append(queueBackward, start)
-	visitedBackward[start] = true
+	collectedMeetingNodes := make(map[string]bool)
+	orderedMeetingNodes := []string{}
 
-	meetingNode := ""
+	const maxSearchDepth = 20
+	const maxReconstructionDepth = 15
 
-	for (len(currentForwardLayer) > 0 || len(queueBackward) > 0) && meetingNode == "" {
-		if len(currentForwardLayer) > 0 && meetingNode == "" {
-			nextForwardLayer := []string{}
+	for depth := 0; depth < maxSearchDepth; depth++ {
+		if len(orderedMeetingNodes) > 0 && depth > 1 {
+			if len(orderedMeetingNodes) > 5 {
+				break
+			}
+		}
+
+		nextFwdQueue := []string{}
+		for _, nodeFromBase := range currentFwdQueue {
+			if visitedBwd[nodeFromBase] && !collectedMeetingNodes[nodeFromBase] {
+				collectedMeetingNodes[nodeFromBase] = true
+				orderedMeetingNodes = append(orderedMeetingNodes, nodeFromBase)
+			}
+
 			for product, combinations := range *recipe {
-				if visitedForward[product] {
+				if visitedFwd[product] {
 					continue
 				}
 				for _, comb := range combinations {
-					ing1 := comb.First()
-					ing2 := comb.Second()
+					ing1, ing2 := comb.First(), comb.Second()
+					canBeFormed := false
+					if ing1 == ing2 {
+						if visitedFwd[ing1] {
+							canBeFormed = true
+						}
+					} else {
+						if visitedFwd[ing1] && visitedFwd[ing2] {
+							canBeFormed = true
+						}
+					}
 
-					if visitedForward[ing1] && visitedForward[ing2] {
-						if !visitedForward[product] {
-							parentsForward[product] = comb
-							visitedForward[product] = true
-							nextForwardLayer = append(nextForwardLayer, product)
-
-							if visitedBackward[product] {
-								meetingNode = product
+					if canBeFormed {
+						if _, ok := parentsFwd[product]; !ok {
+							parentsFwd[product] = comb
+						}
+						foundInNext := false
+						for _, item := range nextFwdQueue {
+							if item == product {
+								foundInNext = true
 								break
 							}
 						}
+						if !foundInNext {
+							nextFwdQueue = append(nextFwdQueue, product)
+						}
+						break
 					}
 				}
-				if meetingNode != "" {
-					break
+			}
+		}
+		for _, n := range nextFwdQueue {
+			visitedFwd[n] = true
+		}
+		currentFwdQueue = nextFwdQueue
+
+		nextBwdQueue := []string{}
+		for _, nodeToMake := range currentBwdQueue {
+			if visitedFwd[nodeToMake] && !collectedMeetingNodes[nodeToMake] {
+				collectedMeetingNodes[nodeToMake] = true
+				orderedMeetingNodes = append(orderedMeetingNodes, nodeToMake)
+			}
+
+			if scraper.IsBaseElement(nodeToMake) {
+				continue
+			}
+
+			recipesForNode, exists := (*recipe)[nodeToMake]
+			if !exists || len(recipesForNode) == 0 {
+				continue
+			}
+
+			chosenCombBwd := recipesForNode[0]
+			if _, ok := parentsBwd[nodeToMake]; !ok {
+				parentsBwd[nodeToMake] = chosenCombBwd
+			}
+
+			for _, ing := range []string{chosenCombBwd.First(), chosenCombBwd.Second()} {
+				if ing != "" && !visitedBwd[ing] {
+					visitedBwd[ing] = true
+					foundInNextBwd := false
+					for _, item := range nextBwdQueue {
+						if item == ing {
+							foundInNextBwd = true
+							break
+						}
+					}
+					if !foundInNextBwd {
+						nextBwdQueue = append(nextBwdQueue, ing)
+					}
 				}
 			}
-			currentForwardLayer = nextForwardLayer
 		}
+		currentBwdQueue = nextBwdQueue
 
-		if meetingNode != "" {
+		if len(currentFwdQueue) == 0 && len(currentBwdQueue) == 0 && depth > 1 {
 			break
 		}
-
-		// Backward Search Step
-		if len(queueBackward) > 0 && meetingNode == "" {
-			currentElementBackward := queueBackward[0]
-			queueBackward = queueBackward[1:]
-
-			if scraper.IsBaseElement(currentElementBackward) {
-				if visitedForward[currentElementBackward] {
-					meetingNode = currentElementBackward
-					break
-				}
-				continue
-			}
-
-			combinations, found := (*recipe)[currentElementBackward]
-			if !found {
-				continue
-			}
-
-			if len(combinations) > 0 {
-				chosenCombination := combinations[0]
-				parentsBackward[currentElementBackward] = chosenCombination
-
-				ing1 := chosenCombination.First()
-				ing2 := chosenCombination.Second()
-
-				processIngredient := func(ing string) bool {
-					if ing != "" && !visitedBackward[ing] {
-						visitedBackward[ing] = true
-						queueBackward = append(queueBackward, ing)
-						if visitedForward[ing] {
-							meetingNode = ing
-							return true
-						}
-					}
-					return false
-				}
-
-				if processIngredient(ing1) {
-					break
-				}
-				if meetingNode != "" {
-					break
-				}
-				if processIngredient(ing2) {
-					break
-				}
-			}
-		}
 	}
 
-	if meetingNode == "" {
-		defaultResult.ForwardTree.Name = fmt.Sprintf("No path found between base elements and '%s'.", start)
-		defaultResult.BackwardTree.Name = fmt.Sprintf("No path found to '%s' from base elements or vice versa.", start)
-		return defaultResult
+	if len(orderedMeetingNodes) == 0 {
+		stopConditionStandard := func(name string) bool {
+			return scraper.IsBaseElement(name)
+		}
+		pathVisitedStandard := make(map[string]bool)
+		return reconstructPathMultipleRecipesInternal(startElementName, recipe, stopConditionStandard, maxRecipesPerNodeInTree, pathVisitedStandard, 0, maxReconstructionDepth)
 	}
 
-	result := scraper.BidirectionalResult{
-		MeetingNodeName: meetingNode,
-		PathFound:       true,
+	sort.Slice(orderedMeetingNodes, func(i, j int) bool {
+		tierI, okI := (*tierMap)[orderedMeetingNodes[i]]
+		tierJ, okJ := (*tierMap)[orderedMeetingNodes[j]]
+		if !okI {
+			tierI = maxSearchDepth + 1
+		}
+		if !okJ {
+			tierJ = maxSearchDepth + 1
+		}
+		if tierI != tierJ {
+			return tierI < tierJ
+		}
+		return orderedMeetingNodes[i] < orderedMeetingNodes[j]
+	})
+
+	chosenMeetingNode := orderedMeetingNodes[0]
+
+	stopConditionForSeg1 := func(name string) bool {
+		if name == chosenMeetingNode && name != startElementName {
+			return true
+		}
+		return scraper.IsBaseElement(name) && name != startElementName
+	}
+	pathVisitedSeg1 := make(map[string]bool)
+	segmentStartToMeeting := reconstructPathMultipleRecipesInternal(startElementName, recipe, stopConditionForSeg1, maxRecipesPerNodeInTree, pathVisitedSeg1, 0, maxReconstructionDepth)
+
+	var segmentMeetingToBase scraper.TreeNode
+	if scraper.IsBaseElement(chosenMeetingNode) {
+		segmentMeetingToBase = scraper.TreeNode{}
+	} else {
+		stopConditionForSeg2 := func(name string) bool {
+			return scraper.IsBaseElement(name)
+		}
+		pathVisitedSeg2 := make(map[string]bool)
+		segmentMeetingToBase = reconstructPathMultipleRecipesInternal(chosenMeetingNode, recipe, stopConditionForSeg2, maxRecipesPerNodeInTree, pathVisitedSeg2, 0, maxReconstructionDepth)
 	}
 
-	baseElementsMap := make(map[string]bool)
-	for _, el := range baseElementsSlice {
-		baseElementsMap[el] = true
+	if startElementName == chosenMeetingNode {
+		segmentStartToMeeting.Children = segmentMeetingToBase.Children
+		return segmentStartToMeeting
 	}
 
-	result.ForwardTree = reconstructPathToMeetingNode(meetingNode, parentsForward, true, recipe, meetingNode)
-	result.BackwardTree = reconstructPathToMeetingNode(start, parentsBackward, false, recipe, meetingNode)
-
-	return result
-}
-
-func reconstructPathToMeetingNode(startNodeForPath string, parents map[string]scraper.Combination, isForwardPath bool, recipeData *scraper.Recipe, globalMeetingNode string) scraper.TreeNode {
-	root := scraper.TreeNode{Name: startNodeForPath}
-	queue := []*scraper.TreeNode{&root}
-	visitedExpansion := make(map[string]bool)
-
-	head := 0
-	for head < len(queue) {
-		currNode := queue[head]
-		head++
-
-		if visitedExpansion[currNode.Name] {
-			continue
-		}
-		visitedExpansion[currNode.Name] = true
-
-		if isForwardPath {
-			if scraper.IsBaseElement(currNode.Name) {
-				currNode.Children = nil
-				continue
-			}
-		} else {
-			if currNode.Name == globalMeetingNode && currNode.Name != startNodeForPath {
-				currNode.Children = nil
-				continue
-			}
-			if currNode.Name != globalMeetingNode && scraper.IsBaseElement(currNode.Name) {
-				currNode.Children = nil
-				continue
-			}
-		}
-
-		var combinationToUse scraper.Combination
-		foundCombination := false
-
-		if comb, ok := parents[currNode.Name]; ok {
-			combinationToUse = comb
-			foundCombination = true
-		} else if !scraper.IsBaseElement(currNode.Name) {
-			if recipesForNode, recipeExists := (*recipeData)[currNode.Name]; recipeExists && len(recipesForNode) > 0 {
-				combinationToUse = recipesForNode[0]
-				foundCombination = true
-			}
-		}
-
-		if !foundCombination {
-			currNode.Children = nil
-			continue
-		}
-
-		ing1Name := combinationToUse.First()
-		ing2Name := combinationToUse.Second()
-
-		if ing1Name == "" && ing2Name == "" && !scraper.IsBaseElement(currNode.Name) {
-			currNode.Children = nil
-			continue
-		}
-
-		if ing1Name != "" || ing2Name != "" {
-			plusNode := scraper.TreeNode{Name: "+"}
-			var childrenForPlusNode []scraper.TreeNode
-
-			// Mengisi childrenForPlusNode
-			if ing1Name != "" {
-				childNode := scraper.TreeNode{Name: ing1Name}
-				childrenForPlusNode = append(childrenForPlusNode, childNode)
-			}
-			if ing2Name != "" {
-				childNode := scraper.TreeNode{Name: ing2Name}
-				childrenForPlusNode = append(childrenForPlusNode, childNode)
-			}
-
-			if len(childrenForPlusNode) > 0 {
-				plusNode.Children = childrenForPlusNode
-				currNode.Children = append(currNode.Children, plusNode)
-
-				// Tambahkan anak-anak dari plusNode ke queue utama untuk ekspansi
-				for i := range plusNode.Children {
-					childToExpand := &plusNode.Children[i]
-
-					expandThisChild := true
-					if isForwardPath {
-						if scraper.IsBaseElement(childToExpand.Name) {
-							expandThisChild = false
-						}
-					} else {
-						if childToExpand.Name == globalMeetingNode && childToExpand.Name != startNodeForPath {
-							expandThisChild = false
-						} else if childToExpand.Name != globalMeetingNode && scraper.IsBaseElement(childToExpand.Name) {
-							expandThisChild = false
-						}
-					}
-
-					if expandThisChild && !visitedExpansion[childToExpand.Name] {
-						queue = append(queue, childToExpand)
-					}
-				}
-			} else {
-				currNode.Children = nil
-			}
-		} else {
-			currNode.Children = nil
-		}
+	nodeToAttach := findNodeInTreeBFS(&segmentStartToMeeting, chosenMeetingNode)
+	if nodeToAttach != nil {
+		nodeToAttach.Children = segmentMeetingToBase.Children
 	}
-	return root
+
+	return segmentStartToMeeting
 }

@@ -6,32 +6,16 @@ definitions:
       status:
         type: string
     type: object
-  scraper.BidirectionalResult:
-    properties:
-      backward_tree:
-        $ref: '#/definitions/scraper.TreeNode'
-      forward_tree:
-        $ref: '#/definitions/scraper.TreeNode'
-      meeting_node_name:
-        type: string
-      path_found:
-        type: boolean
-    type: object
   scraper.TreeNode:
     properties:
       children:
         items:
           $ref: '#/definitions/scraper.TreeNode'
         type: array
+      id:
+        type: integer
       name:
         type: string
-    type: object
-  search.BidirectionalSearchResponse:
-    properties:
-      message:
-        type: string
-      result:
-        $ref: '#/definitions/scraper.BidirectionalResult'
     type: object
   search.ElementResponse:
     properties:
@@ -96,6 +80,11 @@ paths:
         in: query
         name: num
         type: string
+      - default: "false"
+        description: Live update
+        in: query
+        name: live
+        type: string
       produces:
       - application/json
       responses:
@@ -110,22 +99,26 @@ paths:
     get:
       consumes:
       - application/json
-      description: Search the recipe of elements using Bidirectional Search. Returns
-        two trees representing the search paths from base elements and from the target
-        element, meeting at a common node.
+      description: Search the recipe of elements using Bidirectional Search.
       parameters:
       - description: Target element to search for
         in: query
         name: q
         required: true
         type: string
+      - default: "1"
+        description: Chooses the Nth found meeting node (sorted) to construct the
+          path
+        in: query
+        name: num
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: Successful search operation
+          description: Successful search operation.
           schema:
-            $ref: '#/definitions/search.BidirectionalSearchResponse'
+            $ref: '#/definitions/search.SearchResponse'
       summary: Bidirectional search handler
       tags:
       - Search
@@ -144,6 +137,11 @@ paths:
         description: Number of recipes to return
         in: query
         name: num
+        type: string
+      - default: "false"
+        description: Live update
+        in: query
+        name: live
         type: string
       produces:
       - application/json

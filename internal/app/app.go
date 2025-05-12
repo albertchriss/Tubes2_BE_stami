@@ -1,9 +1,9 @@
 package app
 
 import (
-	"github.com/albertchriss/Tubes2_BE_stami/internal/utils"
 	"github.com/albertchriss/Tubes2_BE_stami/internal/api"
 	"github.com/albertchriss/Tubes2_BE_stami/internal/core"
+	"github.com/albertchriss/Tubes2_BE_stami/internal/utils"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -29,6 +29,7 @@ func Run() {
 	handlers := api.InitHandlers(&appCtx)
 
 	r.Use(cors.New(corsConfig))
+	
 	api.RegisterRoutes(r, handlers, &appCtx)
 
 	r.Run(cfg.AppAddress)
