@@ -8,9 +8,9 @@ import (
 	"github.com/albertchriss/Tubes2_BE_stami/internal/scraper"
 )
 
-func SingleRecipeBFS(recipe *scraper.Recipe, start string, liveUpdate bool, wsManager *socket.ClientManager) scraper.TreeNode {
+func SingleRecipeBFS(recipe *scraper.Recipe, tier *scraper.Tier, start string, liveUpdate bool, wsManager *socket.ClientManager) scraper.TreeNode {
 	id := 0
-	root := scraper.TreeNode{Name: start, Id: id}
+	root := scraper.TreeNode{Name: start, Id: id, ImageSrc: (*tier)[start].ImageSrc}
 	if liveUpdate {
 		wsManager.BroadcastNode(root)
 	}
@@ -30,8 +30,8 @@ func SingleRecipeBFS(recipe *scraper.Recipe, start string, liveUpdate bool, wsMa
 		node := &scraper.TreeNode{Name: "+", Id: id}
 		id++
 		node.Children = []scraper.TreeNode{
-			{Name: first, Id: id},
-			{Name: second, Id: id + 1},
+			{Name: first, Id: id, ImageSrc: (*tier)[first].ImageSrc},
+			{Name: second, Id: id + 1, ImageSrc: (*tier)[second].ImageSrc},
 		}
 		id++
 		currNode.Children = append(currNode.Children, *node)
@@ -45,10 +45,10 @@ func SingleRecipeBFS(recipe *scraper.Recipe, start string, liveUpdate bool, wsMa
 	return root
 }
 
-func MultipleRecipeBFS(recipe *scraper.Recipe, start string, numRecipe int, liveUpdate bool, wsManager *socket.ClientManager) scraper.TreeNode {
+func MultipleRecipeBFS(recipe *scraper.Recipe, tier *scraper.Tier, start string, numRecipe int, liveUpdate bool, wsManager *socket.ClientManager) scraper.TreeNode {
 	id := 0
 	// Buat node root untuk elemen target
-	root := scraper.TreeNode{Name: start, Id: id}
+	root := scraper.TreeNode{Name: start, Id: id, ImageSrc: (*tier)[start].ImageSrc}
 	if liveUpdate {
 		wsManager.BroadcastNode(root)
 	}
@@ -89,8 +89,8 @@ func MultipleRecipeBFS(recipe *scraper.Recipe, start string, numRecipe int, live
 					node := &scraper.TreeNode{Name: "+", Id: id}
 					id++
 					node.Children = []scraper.TreeNode{
-						{Name: first, Id: id},
-						{Name: second, Id: id + 1},
+						{Name: first, Id: id, ImageSrc: (*tier)[first].ImageSrc},
+						{Name: second, Id: id + 1, ImageSrc: (*tier)[second].ImageSrc},
 					}
 					id++
 					mutex.Unlock()

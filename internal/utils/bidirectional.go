@@ -39,7 +39,8 @@ func getBaseElements(tierMap *scraper.Tier) []string {
 
 	if tierMap != nil && len(*tierMap) > 0 {
 		tempBaseElementsMap := make(map[string]bool)
-		for el, tierVal := range *tierMap {
+		for el, info := range *tierMap {
+			tierVal := info.Tier
 			if tierVal == 0 {
 				tempBaseElementsMap[el] = true
 			}
@@ -145,7 +146,7 @@ func BidirectionalSearch(
 	}
 
 	visitedFwd := make(map[string]bool)
-	parentsFwd := make(map[string]scraper.Combination) 
+	parentsFwd := make(map[string]scraper.Combination)
 	baseElementsList := getBaseElements(tierMap)
 
 	if len(baseElementsList) == 0 {
@@ -161,7 +162,7 @@ func BidirectionalSearch(
 	}
 
 	visitedBwd := make(map[string]bool)
-	parentsBwd := make(map[string]scraper.Combination) 
+	parentsBwd := make(map[string]scraper.Combination)
 	currentBwdQueue := []string{startElementName}
 	visitedBwd[startElementName] = true
 
@@ -280,15 +281,16 @@ func BidirectionalSearch(
 
 	sort.Slice(orderedMeetingNodes, func(i, j int) bool {
 		tierI, okI := (*tierMap)[orderedMeetingNodes[i]]
+
 		tierJ, okJ := (*tierMap)[orderedMeetingNodes[j]]
 		if !okI {
-			tierI = maxSearchDepth + 1
+			tierI.Tier = maxSearchDepth + 1
 		}
 		if !okJ {
-			tierJ = maxSearchDepth + 1
+			tierJ.Tier = maxSearchDepth + 1
 		}
 		if tierI != tierJ {
-			return tierI < tierJ
+			return tierI.Tier < tierJ.Tier
 		}
 		return orderedMeetingNodes[i] < orderedMeetingNodes[j]
 	})

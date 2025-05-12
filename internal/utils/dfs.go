@@ -25,9 +25,9 @@ type SingleHelperParams struct {
 	WsManager  *socket.ClientManager
 }
 
-func SingleRecipeDFS(recipe *scraper.Recipe, start string, liveUpdate bool, wsManager *socket.ClientManager) scraper.TreeNode {
+func SingleRecipeDFS(recipe *scraper.Recipe, tier *scraper.Tier, start string, liveUpdate bool, wsManager *socket.ClientManager) scraper.TreeNode {
 	id := 0
-	root := scraper.TreeNode{Name: start}
+	root := scraper.TreeNode{Name: start, Id: id, ImageSrc: (*tier)[start].ImageSrc}
 	if liveUpdate {
 		wsManager.BroadcastNode(root)
 	}
@@ -37,11 +37,11 @@ func SingleRecipeDFS(recipe *scraper.Recipe, start string, liveUpdate bool, wsMa
 		LiveUpdate: liveUpdate,
 		WsManager:  wsManager,
 	}
-	SingleDFSHelper(recipe, start, params, &root)
+	SingleDFSHelper(recipe, tier, start, params, &root)
 	return root
 }
 
-func SingleDFSHelper(recipe *scraper.Recipe, start string, params *SingleHelperParams, currNode *scraper.TreeNode) {
+func SingleDFSHelper(recipe *scraper.Recipe, tier *scraper.Tier, start string, params *SingleHelperParams, currNode *scraper.TreeNode) {
 
 	root := params.Root
 	liveUpdate := params.LiveUpdate
@@ -61,8 +61,8 @@ func SingleDFSHelper(recipe *scraper.Recipe, start string, params *SingleHelperP
 	node := &scraper.TreeNode{Name: "+", Id: (*id)}
 	(*id)++
 	node.Children = []scraper.TreeNode{
-		{Name: first, Id: (*id)},
-		{Name: second, Id: (*id) + 1},
+		{Name: first, Id: (*id), ImageSrc: (*tier)[first].ImageSrc},
+		{Name: second, Id: (*id) + 1, ImageSrc: (*tier)[second].ImageSrc},
 	}
 	(*id)++
 	currNode.Children = append(currNode.Children, *node)
@@ -72,17 +72,17 @@ func SingleDFSHelper(recipe *scraper.Recipe, start string, params *SingleHelperP
 		wsManager.BroadcastNode(*root)
 	}
 
-	SingleDFSHelper(recipe, first, params, &node.Children[0])
-	SingleDFSHelper(recipe, second, params, &node.Children[1])
+	SingleDFSHelper(recipe, tier, first, params, &node.Children[0])
+	SingleDFSHelper(recipe, tier, second, params, &node.Children[1])
 }
 
-func MultipleRecipeDFS(recipe *scraper.Recipe, start string, numRecipe int, liveUpdate bool, wsManager *socket.ClientManager) scraper.TreeNode {
+func MultipleRecipeDFS(recipe *scraper.Recipe, tier *scraper.Tier, start string, numRecipe int, liveUpdate bool, wsManager *socket.ClientManager) scraper.TreeNode {
 	count := 1
 	id := 0
 	var mutex sync.Mutex
 	var wg sync.WaitGroup
 
-	root := scraper.TreeNode{Name: start, Id: id}
+	root := scraper.TreeNode{Name: start, Id: id, ImageSrc: (*tier)[start].ImageSrc}
 
 	if liveUpdate {
 		wsManager.BroadcastNode(root)
@@ -98,12 +98,12 @@ func MultipleRecipeDFS(recipe *scraper.Recipe, start string, numRecipe int, live
 		LiveUpdate: liveUpdate,
 		WsManager:  wsManager,
 	}
-	go MultipleRecipeHelper(recipe, start, numRecipe, params, &root)
+	go MultipleRecipeHelper(recipe, tier, start, numRecipe, params, &root)
 	wg.Wait()
 	return root
 }
 
-func MultipleRecipeHelper(recipe *scraper.Recipe, name string, numRecipe int, params *MultHelperParams, currNode *scraper.TreeNode) {
+func MultipleRecipeHelper(recipe *scraper.Recipe, tier *scraper.Tier, name string, numRecipe int, params *MultHelperParams, currNode *scraper.TreeNode) {
 	count := params.Count
 	wg := params.Wg
 	mutex := params.Mutex
@@ -136,8 +136,8 @@ func MultipleRecipeHelper(recipe *scraper.Recipe, name string, numRecipe int, pa
 		node := &scraper.TreeNode{Name: "+", Id: *id}
 		(*id)++
 		node.Children = []scraper.TreeNode{
-			{Name: first, Id: *id},
-			{Name: second, Id: (*id)+1},
+			{Name: first, Id: *id, ImageSrc: (*tier)[first].ImageSrc},
+			{Name: second, Id: (*id) + 1, ImageSrc: (*tier)[second].ImageSrc},
 		}
 		(*id)++
 		mutex.Unlock()
@@ -148,8 +148,8 @@ func MultipleRecipeHelper(recipe *scraper.Recipe, name string, numRecipe int, pa
 		}
 
 		wg.Add(1)
-		go MultipleRecipeHelper(recipe, first, numRecipe, params, &node.Children[0])
+		go MultipleRecipeHelper(recipe, tier, first, numRecipe, params, &node.Children[0])
 		wg.Add(1)
-		go MultipleRecipeHelper(recipe, second, numRecipe, params, &node.Children[1])
+		go MultipleRecipeHelper(recipe, tier, second, numRecipe, params, &node.Children[1])
 	}
 }

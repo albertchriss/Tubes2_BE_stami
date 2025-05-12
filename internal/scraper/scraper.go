@@ -12,6 +12,15 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+func cutAfterSubstring(s, sub string) string {
+	index := strings.Index(s, sub)
+	if index == -1 {
+		return s
+	}
+	endIndex := index + len(sub)
+	return s[:endIndex]
+}
+
 func Scraper(recipeFilename string, tierFileName string) error {
 	url := "https://little-alchemy.fandom.com/wiki/Elements_(Little_Alchemy_2)"
 
@@ -26,7 +35,7 @@ func Scraper(recipeFilename string, tierFileName string) error {
 	} else if err != nil {
 		return fmt.Errorf("error checking output directory %s: %w", outputDir, err)
 	}
-    log.Println("Starting data scraping...")
+	log.Println("Starting data scraping...")
 
 	res, err := http.Get(url)
 	if err != nil {
@@ -44,7 +53,12 @@ func Scraper(recipeFilename string, tierFileName string) error {
 	}
 
 	elementsData := make(map[string][][]string)
-	elementsTier := make(map[string]int)
+
+	type elementInfo struct {
+		Tier     int    `json:"tier"`
+		ImageSrc string `json:"imageSrc"`
+	}
+	elementsTier := make(map[string]elementInfo)
 
 	// class "list-table col-list icon-hover" tbody tr
 	doc.Find("table.list-table.col-list.icon-hover tbody").Each(func(num int, table *goquery.Selection) {
@@ -53,18 +67,27 @@ func Scraper(recipeFilename string, tierFileName string) error {
 			if i == 0 {
 				return
 			}
-	
+
 			elementName := ""
 			firstTD := row.Find("td").First()
 			if firstTD.Length() > 0 {
 				elementName = strings.TrimSpace(firstTD.Find("a").Text())
 			}
-	
+			if elementName == "Time" {
+				return
+			}
+
+			imageAnchor := firstTD.Find("span.icon-hover span a")
+			imageSrc, exists := imageAnchor.Attr("href")
+			if exists {
+				imageSrc = cutAfterSubstring(imageSrc, ".svg")
+			}
+
 			var recipeCombinations [][]string
 			secondTD := row.Find("td").Eq(1)
 			if secondTD.Length() > 0 {
 				recipesList := secondTD.Find("ul li")
-	
+
 				recipesList.Each(func(j int, recipeItem *goquery.Selection) {
 					var ingredients []string
 					recipeItem.Find("a").Each(func(k int, ingredientLink *goquery.Selection) {
@@ -78,7 +101,7 @@ func Scraper(recipeFilename string, tierFileName string) error {
 					}
 				})
 			}
-	
+
 			if elementName != "" {
 				if len(recipeCombinations) > 0 {
 					elementsData[elementName] = recipeCombinations
@@ -87,9 +110,9 @@ func Scraper(recipeFilename string, tierFileName string) error {
 				}
 
 				if num == 0 {
-					elementsTier[elementName] = 0
+					elementsTier[elementName] = elementInfo{Tier: 0, ImageSrc: imageSrc}
 				} else {
-					elementsTier[elementName] = num-1
+					elementsTier[elementName] = elementInfo{Tier: num-1, ImageSrc: imageSrc}
 				}
 			}
 		})
@@ -101,18 +124,18 @@ func Scraper(recipeFilename string, tierFileName string) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal JSON: %w", err)
 	}
-	
+
 	file, err := os.Create(recipeFilename)
 	if err != nil {
 		return fmt.Errorf("failed to create output file %s: %w", recipeFilename, err)
 	}
 	defer file.Close()
-	
+
 	_, err = file.Write(jsonData)
 	if err != nil {
 		return fmt.Errorf("failed to write JSON to file %s: %w", recipeFilename, err)
 	}
-	
+
 	jsonTierData, err := json.MarshalIndent(elementsTier, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal JSON: %w", err)

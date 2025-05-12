@@ -23,20 +23,26 @@ func (c Combination) Second() string {
 }
 
 func IsBaseElement(s string) bool {
-	return s == "Air" || s == "Earth" || s == "Fire" || s == "Water" || s == "Time"
+	return s == "Air" || s == "Earth" || s == "Fire" || s == "Water"
 }
 
 // Recipe is a map where the key is a string and the value is a slice of Combination
 // representing the combinations of elements that can be made from the key element.
 type Recipe map[string][]Combination
 
-type Tier map[string]int
+type ElementInfo struct {
+	Tier     int    `json:"tier"`
+	ImageSrc string `json:"imageSrc"`
+}
+
+type Tier map[string]ElementInfo
 
 // TreeNode is the struct for frontend
 // representation of the recipe tree.
 type TreeNode struct {
 	Id       int        `json:"id"`
 	Name     string     `json:"name"`
+	ImageSrc string     `json:"imageSrc"`
 	Children []TreeNode `json:"children"`
 }
 
@@ -69,31 +75,46 @@ func JsonToTier(filename string) *Tier {
 	return &result
 }
 
+type ElementTier struct {
+	Name string
+	Tier int
+}
+
 func (recipe *Recipe) SortRecipeChildren(tier *Tier) {
-	for key, combinations := range *recipe {
+	sortedTier := []ElementTier{}
+	for name, info := range *tier {
+		num := info.Tier
+		sortedTier = append(sortedTier, ElementTier{Name: name, Tier: num})
+	}
+
+	sort.Slice(sortedTier, func(i, j int) bool {
+		return sortedTier[i].Tier < sortedTier[j].Tier
+	})
+
+	for _, element := range sortedTier {
+		key := element.Name
+		combinations := (*recipe)[key]
 		newCombs := []Combination{}
 		value := [][]int{}
 		for _, combination := range combinations {
 			_, foundFirst := (*tier)[combination.First()]
 			if !foundFirst {
-				log.Printf("Element %s not found in tier map\n", combination.First())
 				continue
 			}
 			_, foundSec := (*tier)[combination.Second()]
 			if !foundSec {
-				log.Printf("Element %s not found in tier map\n", combination.Second())
 				continue
 			}
 
 			first := combination.First()
 			second := combination.Second()
 
-			if (*tier)[first] >= (*tier)[key] || ((*tier)[second] >= (*tier)[key]) {
+			if (*tier)[first].Tier >= (*tier)[key].Tier || ((*tier)[second].Tier >= (*tier)[key].Tier) {
 				continue
 			}
 
-			maks := max((*tier)[first], (*tier)[second])
-			mini := min((*tier)[first], (*tier)[second])
+			maks := max((*tier)[first].Tier, (*tier)[second].Tier)
+			mini := min((*tier)[first].Tier, (*tier)[second].Tier)
 			value = append(value, []int{maks, mini})
 			newCombs = append(newCombs, combination)
 		}
@@ -119,6 +140,7 @@ func (recipe *Recipe) SortRecipeChildren(tier *Tier) {
 		} else {
 			if !IsBaseElement(key) {
 				delete(*recipe, key)
+				delete(*tier, key)
 			}
 		}
 	}
