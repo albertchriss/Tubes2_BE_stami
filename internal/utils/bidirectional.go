@@ -5,9 +5,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/albertchriss/Tubes2_BE_stami/internal/scraper"
 	"maps"
 	"slices"
+
+	"github.com/albertchriss/Tubes2_BE_stami/internal/scraper"
 )
 
 var globalNodeIdCounter int
@@ -44,7 +45,8 @@ func getBaseElementsInternal(tierMap *scraper.Tier) []string {
 
 	if tierMap != nil && len(*tierMap) > 0 {
 		tempBaseElementsMap := make(map[string]bool)
-		for el, tierVal := range *tierMap {
+		for el, info := range *tierMap {
+			tierVal := info.Tier
 			if tierVal == 0 {
 				tempBaseElementsMap[el] = true
 			}
@@ -65,6 +67,7 @@ func getBaseElementsInternal(tierMap *scraper.Tier) []string {
 func reconstructSinglePathRecursive(
 	currentNodeName string,
 	recipeData *scraper.Recipe,
+	tierMap *scraper.Tier,
 	stopCondition func(name string) bool,
 	pathVisited map[string]bool,
 	currentDepth int,
@@ -72,7 +75,7 @@ func reconstructSinglePathRecursive(
 ) scraper.TreeNode {
 
 	globalNodeIdCounter++
-	rootNode := scraper.TreeNode{Id: globalNodeIdCounter, Name: currentNodeName}
+	rootNode := scraper.TreeNode{Id: globalNodeIdCounter, Name: currentNodeName, ImageSrc: (*tierMap)[currentNodeName].ImageSrc}
 
 	if currentDepth > maxRecursiveDepth {
 		return rootNode
@@ -108,14 +111,14 @@ func reconstructSinglePathRecursive(
 	}
 
 	if ingredient1Name != "" {
-		child1Tree := reconstructSinglePathRecursive(ingredient1Name, recipeData, stopCondition, childPathVisited1, currentDepth+1, maxRecursiveDepth)
+		child1Tree := reconstructSinglePathRecursive(ingredient1Name, recipeData, tierMap, stopCondition, childPathVisited1, currentDepth+1, maxRecursiveDepth)
 		childrenForPlusNode = append(childrenForPlusNode, child1Tree)
 	}
 
 	childPathVisited2 := make(map[string]bool)
 	maps.Copy(childPathVisited2, pathVisited)
 	if ingredient2Name != "" {
-		child2Tree := reconstructSinglePathRecursive(ingredient2Name, recipeData, stopCondition, childPathVisited2, currentDepth+1, maxRecursiveDepth)
+		child2Tree := reconstructSinglePathRecursive(ingredient2Name, recipeData, tierMap, stopCondition, childPathVisited2, currentDepth+1, maxRecursiveDepth)
 		childrenForPlusNode = append(childrenForPlusNode, child2Tree)
 	}
 
@@ -139,7 +142,7 @@ func solveSingleElementBidirectionally(
 	}
 	if scraper.IsBaseElement(targetElementName) {
 		globalNodeIdCounter++
-		return scraper.TreeNode{Id: globalNodeIdCounter, Name: targetElementName}
+		return scraper.TreeNode{Id: globalNodeIdCounter, Name: targetElementName, ImageSrc: (*tierMap)[targetElementName].ImageSrc}
 	}
 
 	recipesForTarget, targetExists := (*recipe)[targetElementName]
@@ -249,20 +252,21 @@ func solveSingleElementBidirectionally(
 	if len(orderedMeetingNodes) == 0 {
 		stopConditionStandard := func(name string) bool { return scraper.IsBaseElement(name) }
 		pathVisitedStandard := make(map[string]bool)
-		return reconstructSinglePathRecursive(targetElementName, recipe, stopConditionStandard, pathVisitedStandard, 0, maxReconstructionDepth)
+		return reconstructSinglePathRecursive(targetElementName, recipe, tierMap, stopConditionStandard, pathVisitedStandard, 0, maxReconstructionDepth)
 	}
 
 	sort.Slice(orderedMeetingNodes, func(i, j int) bool {
 		tierI, okI := (*tierMap)[orderedMeetingNodes[i]]
+
 		tierJ, okJ := (*tierMap)[orderedMeetingNodes[j]]
 		if !okI {
-			tierI = maxSearchDepth + 1
+			tierI.Tier = maxSearchDepth + 1
 		}
 		if !okJ {
-			tierJ = maxSearchDepth + 1
+			tierJ.Tier = maxSearchDepth + 1
 		}
 		if tierI != tierJ {
-			return tierI < tierJ
+			return tierI.Tier < tierJ.Tier
 		}
 		return orderedMeetingNodes[i] < orderedMeetingNodes[j]
 	})
@@ -273,7 +277,7 @@ func solveSingleElementBidirectionally(
 		return name == chosenMeetingNode || (scraper.IsBaseElement(name) && name != targetElementName)
 	}
 	pathVisitedSeg1 := make(map[string]bool)
-	segmentStartToMeeting := reconstructSinglePathRecursive(targetElementName, recipe, stopConditionForSeg1, pathVisitedSeg1, 0, maxReconstructionDepth)
+	segmentStartToMeeting := reconstructSinglePathRecursive(targetElementName, recipe, tierMap, stopConditionForSeg1, pathVisitedSeg1, 0, maxReconstructionDepth)
 
 	var segmentMeetingToBase scraper.TreeNode
 	if scraper.IsBaseElement(chosenMeetingNode) {
@@ -282,13 +286,13 @@ func solveSingleElementBidirectionally(
 	} else {
 		stopConditionForSeg2 := func(name string) bool { return scraper.IsBaseElement(name) }
 		pathVisitedSeg2 := make(map[string]bool)
-		segmentMeetingToBase = reconstructSinglePathRecursive(chosenMeetingNode, recipe, stopConditionForSeg2, pathVisitedSeg2, 0, maxReconstructionDepth)
+		segmentMeetingToBase = reconstructSinglePathRecursive(chosenMeetingNode, recipe, tierMap, stopConditionForSeg2, pathVisitedSeg2, 0, maxReconstructionDepth)
 	}
 
 	if segmentStartToMeeting.Name == chosenMeetingNode {
 		if len(segmentMeetingToBase.Children) > 0 {
 			segmentStartToMeeting.Children = segmentMeetingToBase.Children
-		} 
+		}
 		return segmentStartToMeeting
 	}
 
@@ -297,7 +301,7 @@ func solveSingleElementBidirectionally(
 	if nodeToAttach != nil {
 		if len(segmentMeetingToBase.Children) > 0 {
 			nodeToAttach.Children = segmentMeetingToBase.Children
-		} 
+		}
 	}
 	return segmentStartToMeeting
 }
@@ -310,7 +314,7 @@ func BidirectionalSearch(
 ) scraper.TreeNode {
 	globalNodeIdCounter = 0
 
-	rootNode := scraper.TreeNode{Id: globalNodeIdCounter, Name: startElementName}
+	rootNode := scraper.TreeNode{Id: globalNodeIdCounter, Name: startElementName, ImageSrc: (*tierMap)[startElementName].ImageSrc}
 
 	if scraper.IsBaseElement(startElementName) {
 		return rootNode
@@ -364,13 +368,12 @@ func BidirectionalSearch(
 			if !isError1 && len(treeIngredient1.Name) >= 20 && strings.HasSuffix(treeIngredient1.Name, "no base elements.") {
 				isError1 = true
 			}
-			 if !isError1 && len(treeIngredient1.Name) >= 25 && strings.HasSuffix(treeIngredient1.Name, "Recipe data is nil.") {
+			if !isError1 && len(treeIngredient1.Name) >= 25 && strings.HasSuffix(treeIngredient1.Name, "Recipe data is nil.") {
 				isError1 = true
 			}
 		} else {
 			isError1 = true
 		}
-
 
 		isError2 := false
 		if treeIngredient2.Name != "" {
@@ -389,7 +392,6 @@ func BidirectionalSearch(
 		} else {
 			isError2 = true
 		}
-
 
 		if !isError1 {
 			plusNode.Children = append(plusNode.Children, treeIngredient1)

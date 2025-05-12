@@ -13,7 +13,6 @@ type Service interface {
 	BFSSearch(query string, numRecipe int, liveUpdate bool) scraper.TreeNode
 	DFSSearch(query string, numRecipe int, liveUpdate bool) scraper.TreeNode
 	BidirectionalSearch(query string, numMeetingNodeChoice int) scraper.TreeNode
-
 }
 
 type service struct {
@@ -42,10 +41,10 @@ func (s *service) BFSSearch(query string, numRecipe int, liveUpdate bool) scrape
 
 	if numRecipe > 1 {
 		log.Println("Performing BFS for multiple recipes")
-		return utils.MultipleRecipeBFS(recipe, query, numRecipe, liveUpdate, s.wsManager)
+		return utils.MultipleRecipeBFS(recipe, s.appCtx.Config.TierMap, query, numRecipe, liveUpdate, s.wsManager)
 	} else {
 		log.Println("Performing BFS for single recipe")
-		return utils.SingleRecipeBFS(recipe, query, liveUpdate, s.wsManager)
+		return utils.SingleRecipeBFS(recipe, s.appCtx.Config.TierMap, query, liveUpdate, s.wsManager)
 	}
 }
 
@@ -63,10 +62,10 @@ func (s *service) DFSSearch(query string, numRecipe int, liveUpdate bool) scrape
 
 	if numRecipe > 1 {
 		log.Println("Performing DFS for multiple recipes")
-		return utils.MultipleRecipeDFS(recipe, query, numRecipe, liveUpdate, s.wsManager)
+		return utils.MultipleRecipeDFS(recipe, s.appCtx.Config.TierMap, query, numRecipe, liveUpdate, s.wsManager)
 	} else {
 		log.Println("Performing DFS for single recipe")
-		return utils.SingleRecipeDFS(recipe, query, liveUpdate, s.wsManager)
+		return utils.SingleRecipeDFS(recipe, s.appCtx.Config.TierMap, query, liveUpdate, s.wsManager)
 	}
 }
 
@@ -79,6 +78,6 @@ func (s *service) BidirectionalSearch(query string, numMeetingNodeChoice int) sc
 		log.Println("Recipe tree is nil")
 		return scraper.TreeNode{Name: "Recipe tree is nil"}
 	}
-	
+
 	return utils.BidirectionalSearch(recipe, tierMap, query, numMeetingNodeChoice)
 }
