@@ -18,7 +18,7 @@ type ElementResponse struct {
 
 type SearchResponse struct {
 	Message string           `json:"message"`
-	Result  scraper.TreeNode `json:"result"`
+	Result  scraper.SearchResult `json:"result"`
 }
 
 type Handler struct {

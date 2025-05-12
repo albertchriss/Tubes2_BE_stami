@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-
+	"time"
 	"maps"
 	"slices"
 
@@ -12,6 +12,22 @@ import (
 )
 
 var globalNodeIdCounter int
+
+func countNodesInTree(node *scraper.TreeNode) int {
+	if node == nil {
+		return 0
+	}
+
+	count := 0
+	if node.Name != "+" {
+		count = 1
+	}
+
+	for i := range node.Children {
+		count += countNodesInTree(&node.Children[i])
+	}
+	return count
+}
 
 func findNodeInTreeBFSInternal(root *scraper.TreeNode, name string) *scraper.TreeNode {
 	if root == nil {
@@ -311,19 +327,25 @@ func BidirectionalSearch(
 	tierMap *scraper.Tier,
 	startElementName string,
 	numRecipesToFind int,
-) scraper.TreeNode {
+) scraper.SearchResult {
+	startTime := time.Now()
 	globalNodeIdCounter = 0
 
 	rootNode := scraper.TreeNode{Id: globalNodeIdCounter, Name: startElementName, ImageSrc: (*tierMap)[startElementName].ImageSrc}
+	globalNodeIdCounter++
 
 	if scraper.IsBaseElement(startElementName) {
-		return rootNode
+        duration := time.Since(startTime)
+		nodeCount := countNodesInTree(&rootNode)
+		return scraper.SearchResult{Tree: rootNode, NodeCount: nodeCount, TimeTaken: duration}
 	}
 
 	initialCombinations, exists := (*recipe)[startElementName]
 	if !exists || len(initialCombinations) == 0 {
 		rootNode.Name = fmt.Sprintf("No recipes for %s", startElementName)
-		return rootNode
+		duration := time.Since(startTime)
+		nodeCount := countNodesInTree(&rootNode)
+		return scraper.SearchResult{Tree: rootNode, NodeCount: nodeCount, TimeTaken: duration}
 	}
 
 	numActualRecipes := len(initialCombinations)
@@ -404,5 +426,8 @@ func BidirectionalSearch(
 			rootNode.Children = append(rootNode.Children, plusNode)
 		}
 	}
-	return rootNode
+
+	nodeCount := countNodesInTree(&rootNode)
+	duration := time.Since(startTime)
+	return scraper.SearchResult{Tree: rootNode, NodeCount: nodeCount, TimeTaken: duration}
 }

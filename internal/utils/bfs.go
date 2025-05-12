@@ -8,9 +8,12 @@ import (
 	"github.com/albertchriss/Tubes2_BE_stami/internal/scraper"
 )
 
-func SingleRecipeBFS(recipe *scraper.Recipe, tier *scraper.Tier, start string, liveUpdate bool, wsManager *socket.ClientManager) scraper.TreeNode {
+func SingleRecipeBFS(recipe *scraper.Recipe, tier *scraper.Tier, start string, liveUpdate bool, wsManager *socket.ClientManager) scraper.SearchResult {
+	startTime := time.Now()
+	nodeCount := 0
 	id := 0
 	root := scraper.TreeNode{Name: start, Id: id, ImageSrc: (*tier)[start].ImageSrc}
+	nodeCount++
 	if liveUpdate {
 		wsManager.BroadcastNode(root)
 	}
@@ -35,6 +38,7 @@ func SingleRecipeBFS(recipe *scraper.Recipe, tier *scraper.Tier, start string, l
 		}
 		id++
 		currNode.Children = append(currNode.Children, *node)
+		nodeCount += 2
 		if liveUpdate {
 			time.Sleep(500 * time.Millisecond)
 			wsManager.BroadcastNode(root)
@@ -42,13 +46,17 @@ func SingleRecipeBFS(recipe *scraper.Recipe, tier *scraper.Tier, start string, l
 		queue = append(queue, &node.Children[0], &node.Children[1])
 	}
 
-	return root
+	duration := time.Since(startTime)
+	return scraper.SearchResult{Tree: root, NodeCount: nodeCount, TimeTaken: duration}
 }
 
-func MultipleRecipeBFS(recipe *scraper.Recipe, tier *scraper.Tier, start string, numRecipe int, liveUpdate bool, wsManager *socket.ClientManager) scraper.TreeNode {
+func MultipleRecipeBFS(recipe *scraper.Recipe, tier *scraper.Tier, start string, numRecipe int, liveUpdate bool, wsManager *socket.ClientManager) scraper.SearchResult {
+	startTime := time.Now()
+    nodeCount := 0
 	id := 0
 	// Buat node root untuk elemen target
 	root := scraper.TreeNode{Name: start, Id: id, ImageSrc: (*tier)[start].ImageSrc}
+	nodeCount++
 	if liveUpdate {
 		wsManager.BroadcastNode(root)
 	}
@@ -110,8 +118,16 @@ func MultipleRecipeBFS(recipe *scraper.Recipe, tier *scraper.Tier, start string,
 			}(node)
 		}
 		wg.Wait()
+
+		mutex.Lock()
+		for range currentQueue {
+			nodeCount++
+		}
+		mutex.Unlock()
+		
 		queue = currentQueue
 	}
 
-	return root
+	duration := time.Since(startTime)
+	return scraper.SearchResult{Tree: root, NodeCount: nodeCount, TimeTaken: duration}
 }

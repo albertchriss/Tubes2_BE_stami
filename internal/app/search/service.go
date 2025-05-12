@@ -10,9 +10,9 @@ import (
 )
 
 type Service interface {
-	BFSSearch(query string, numRecipe int, liveUpdate bool) scraper.TreeNode
-	DFSSearch(query string, numRecipe int, liveUpdate bool) scraper.TreeNode
-	BidirectionalSearch(query string, numMeetingNodeChoice int) scraper.TreeNode
+	BFSSearch(query string, numRecipe int, liveUpdate bool) scraper.SearchResult
+	DFSSearch(query string, numRecipe int, liveUpdate bool) scraper.SearchResult
+	BidirectionalSearch(query string, numMeetingNodeChoice int) scraper.SearchResult
 }
 
 type service struct {
@@ -27,16 +27,16 @@ func NewService(appCtx *core.AppContext, wsManager *socket.ClientManager) *servi
 	}
 }
 
-func (s *service) BFSSearch(query string, numRecipe int, liveUpdate bool) scraper.TreeNode {
+func (s *service) BFSSearch(query string, numRecipe int, liveUpdate bool) scraper.SearchResult {
 	log.Println("Performing BFS search for query:", query)
 	recipe := s.appCtx.Config.RecipeTree
 	if recipe == nil {
 		log.Println("Recipe tree is nil")
-		return scraper.TreeNode{Name: "Recipe tree is nil"}
+		return scraper.SearchResult{Tree: scraper.TreeNode{Name: "Recipe tree is nil"}}
 	}
 	if _, exists := (*recipe)[query]; !exists {
 		log.Println("Query not found in recipe tree")
-		return scraper.TreeNode{Name: "Query not found in recipe tree"}
+		return scraper.SearchResult{Tree: scraper.TreeNode{Name: "Query not found in recipe tree"}}
 	}
 
 	if numRecipe > 1 {
@@ -48,16 +48,16 @@ func (s *service) BFSSearch(query string, numRecipe int, liveUpdate bool) scrape
 	}
 }
 
-func (s *service) DFSSearch(query string, numRecipe int, liveUpdate bool) scraper.TreeNode {
+func (s *service) DFSSearch(query string, numRecipe int, liveUpdate bool) scraper.SearchResult {
 	log.Println("Performing DFS search for query:", query)
 	recipe := s.appCtx.Config.RecipeTree
 	if recipe == nil {
 		log.Println("Recipe tree is nil")
-		return scraper.TreeNode{Name: "Recipe tree is nil"}
+		return scraper.SearchResult{Tree: scraper.TreeNode{Name: "Recipe tree is nil"}}
 	}
 	if _, exists := (*recipe)[query]; !exists {
 		log.Println("Query not found in recipe tree")
-		return scraper.TreeNode{Name: "Query not found in recipe tree"}
+		return scraper.SearchResult{Tree: scraper.TreeNode{Name: "Query not found in recipe tree"}}
 	}
 
 	if numRecipe > 1 {
@@ -69,14 +69,14 @@ func (s *service) DFSSearch(query string, numRecipe int, liveUpdate bool) scrape
 	}
 }
 
-func (s *service) BidirectionalSearch(query string, numMeetingNodeChoice int) scraper.TreeNode {
+func (s *service) BidirectionalSearch(query string, numMeetingNodeChoice int) scraper.SearchResult {
 	log.Println("Performing Bidirectional search for query:", query, "meeting node choice:", numMeetingNodeChoice)
 	recipe := s.appCtx.Config.RecipeTree
 	tierMap := s.appCtx.Config.TierMap
 
 	if recipe == nil {
 		log.Println("Recipe tree is nil")
-		return scraper.TreeNode{Name: "Recipe tree is nil"}
+		return scraper.SearchResult{Tree: scraper.TreeNode{Name: "Recipe tree is nil"}}
 	}
 
 	return utils.BidirectionalSearch(recipe, tierMap, query, numMeetingNodeChoice)

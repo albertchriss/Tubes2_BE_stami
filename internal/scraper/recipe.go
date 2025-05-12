@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"sort"
+	"time"
 )
 
 type Combination [2]string
@@ -44,6 +45,12 @@ type TreeNode struct {
 	Name     string     `json:"name"`
 	ImageSrc string     `json:"imageSrc"`
 	Children []TreeNode `json:"children"`
+}
+
+type SearchResult struct {
+    Tree      TreeNode
+    NodeCount int
+    TimeTaken time.Duration
 }
 
 func JsonToRecipe(filename string) *Recipe {
