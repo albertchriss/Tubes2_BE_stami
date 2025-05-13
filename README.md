@@ -1,26 +1,40 @@
-# Tubes 2 STIMA
+<h1 align="center">STAMI</h1>
+<h2 align="center">IF2211 Strategi Algoritma</h2>
+
 ## Table of Contents
+1. [General Information](#general-information)
+2. [Features](#features)
+3. [Requirements](#requirements)
+4. [Installation](#installation)
+5. [Usage](#usage)
+6. [Contributors](#contributors)
 
-- [Tubes 2 Stima](#tubes-2-stima)
-    - [Table of Contents](#table-of-contents)
-    - [Getting Started](#getting-started)
-        - [Prerequisites](#prerequisites)
-        - [Installation](#installation)
-    - [Usage](#usage)
-    - [Acknowledgements](#acknowledgements)
 
-## Getting Started
+## General Information
+Stami is a website that provides recipes for elements in the game Little Alchemy 2. It visualizes the recipe as a graph and uses graph search algorithms such as Breadth First Search (BFS), Depth First Search (DFS), and Bidirectional Search to find the solution. The website is built with Golang for the backend and Next.js for the frontend. Please note, that the forming elements are in lower tier than the initial element.
+<br/><br/>
+You can access our website in this link [stami](https://stami.cpoandy.me/home)!
 
-### Prerequisites
 
+## Features
+| No. | Feature | Description |
+|-----|----------------------|------------------------------------------------------------------|
+| 1 | BFS | Systematically explores and visits all the vertices of a graph |
+| 2 | DFS | Explores each branch as deeply as possible before backtracking |
+| 3 | Bidirectional | Explores the search space from both the initial and goal nodes simultaneously |
+| 4 | Multiple Recipe | Option to get multiple recipes for one element, if they exist |
+| 5 | Live Update | View the search algorithm's process in real time |
+
+
+## Requirements
 Before setting up the project, make sure you have the following installed:
-
-- **Makefile** - Build automation tool.
-- **Docker** - Containerization platform.
-- **Docker Compose** - Tool for defining and running multi-container Docker applications.
-- **Docker Desktop** (optional) - Docker GUI for managing containers.
-- **Golang** - Programming language used for the project.
-- **swag** - Swagger Documentation generator for Go. https://github.com/swaggo/swag
+| No. | Required Program | Uses
+| :--: | :--: | :--: |
+| 1 | Makefile | Build automation tool |
+| 2 | Docker | Containerization platform |
+| 3 | Docker Compose | Tool for defining and running multi-container Docker application |
+| 4 | Golang | Programming language used for the project |
+| swag | Swagger Documentation generator for Go. [Link](https://github.com/swaggo/swag) |
 
 
 ### Installation
@@ -64,12 +78,12 @@ make down-dev
 make generate-docs
 ```
 
-## Acknowledgements
-
-This project is being developed by:
-
-- Bertha Soliany Frandi - 13523026
-- Albertus Christian Poandy - 13523077
-- Ahmad Ibrahim - 13523089
+## Contributors
+### **Kelompok Stami**
+| NIM | Nama |
+| :--: | :--: |
+| 13523026 | Bertha Soliany Frandi |
+| 13523077 | Albertus Christian Poandy |
+| 13523089 | Ahmad Ibrahim |
 
 Template by [Farhan Nabil Suryono](https://github.com/Altair1618)
