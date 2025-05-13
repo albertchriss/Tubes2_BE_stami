@@ -11,9 +11,11 @@ import (
 type MultHelperParams struct {
 	Root       *scraper.TreeNode
 	Id         *int
-	Count      *int
+	Parent     *map[int]*scraper.TreeNode
+	NumPath    *map[int]int
 	Mutex      *sync.Mutex
 	Wg         *sync.WaitGroup
+	Done       *bool
 	LiveUpdate bool
 	WsManager  *socket.ClientManager
 }
@@ -77,8 +79,8 @@ func SingleDFSHelper(recipe *scraper.Recipe, tier *scraper.Tier, start string, p
 }
 
 func MultipleRecipeDFS(recipe *scraper.Recipe, tier *scraper.Tier, start string, numRecipe int, liveUpdate bool, wsManager *socket.ClientManager) scraper.TreeNode {
-	count := 1
 	id := 0
+	done := false
 	var mutex sync.Mutex
 	var wg sync.WaitGroup
 
@@ -92,7 +94,9 @@ func MultipleRecipeDFS(recipe *scraper.Recipe, tier *scraper.Tier, start string,
 	params := &MultHelperParams{
 		Root:       &root,
 		Id:         &id,
-		Count:      &count,
+		Parent:     &map[int]*scraper.TreeNode{},
+		NumPath:    &map[int]int{},
+		Done:       &done,
 		Mutex:      &mutex,
 		Wg:         &wg,
 		LiveUpdate: liveUpdate,
@@ -104,13 +108,18 @@ func MultipleRecipeDFS(recipe *scraper.Recipe, tier *scraper.Tier, start string,
 }
 
 func MultipleRecipeHelper(recipe *scraper.Recipe, tier *scraper.Tier, name string, numRecipe int, params *MultHelperParams, currNode *scraper.TreeNode) {
-	count := params.Count
 	wg := params.Wg
 	mutex := params.Mutex
+
+	mutex.Lock()
+	parent := params.Parent
+	numPath := params.NumPath
+	done := params.Done
 	liveUpdate := params.LiveUpdate
 	wsManager := params.WsManager
 	root := params.Root
 	id := params.Id
+	mutex.Unlock()
 
 	defer wg.Done()
 
@@ -120,36 +129,45 @@ func MultipleRecipeHelper(recipe *scraper.Recipe, tier *scraper.Tier, name strin
 	combinations := (*recipe)[name]
 
 	for i, combination := range combinations {
-		if i > 0 {
-			mutex.Lock()
-			if *count >= numRecipe {
-				mutex.Unlock()
-				break
-			}
-			(*count)++
-			mutex.Unlock()
-		}
+
+		mutex.Lock()
+		currId := (*id)
+		(*id) += 3
+		mutex.Unlock()
 
 		first, second := combination.First(), combination.Second()
-		mutex.Lock()
-		(*id)++
-		node := &scraper.TreeNode{Name: "+", Id: *id}
-		(*id)++
+		node := &scraper.TreeNode{Name: "+", Id: currId + 1}
 		node.Children = []scraper.TreeNode{
-			{Name: first, Id: *id, ImageSrc: (*tier)[first].ImageSrc},
-			{Name: second, Id: (*id) + 1, ImageSrc: (*tier)[second].ImageSrc},
-		}
-		(*id)++
-		mutex.Unlock()
-		currNode.Children = append(currNode.Children, *node)
-		if liveUpdate {
-			time.Sleep(500 * time.Millisecond)
-			wsManager.BroadcastNode(*root)
+			{Name: first, Id: currId + 2, ImageSrc: (*tier)[first].ImageSrc},
+			{Name: second, Id: currId + 3, ImageSrc: (*tier)[second].ImageSrc},
 		}
 
+		mutex.Lock()
+		node.InitParAndNum(currNode, parent, numPath)
+		if (*done) && i > 0 {
+			mutex.Unlock()
+			break
+		}
+		currNode.Children = append(currNode.Children, *node)
+		if i > 0 {
+			num := currNode.CountNumRecipe(parent, numPath)
+			if num >= numRecipe {
+				(*done) = true
+			}
+		}
+		mutex.Unlock()
 		wg.Add(1)
 		go MultipleRecipeHelper(recipe, tier, first, numRecipe, params, &node.Children[0])
 		wg.Add(1)
 		go MultipleRecipeHelper(recipe, tier, second, numRecipe, params, &node.Children[1])
+
+		if liveUpdate {
+			mutex.Lock()
+			time.Sleep(300 * time.Millisecond)
+			wsManager.BroadcastNode(*root)
+			mutex.Unlock()
+		}
+
 	}
+	// wg.Wait()
 }
