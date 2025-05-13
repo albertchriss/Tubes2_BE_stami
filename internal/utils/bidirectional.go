@@ -150,21 +150,22 @@ func solveSingleElementBidirectionally(
 	targetElementName string,
 	recipe *scraper.Recipe,
 	tierMap *scraper.Tier,
-) scraper.TreeNode {
+) (scraper.TreeNode, time.Duration) {
+	var duration time.Duration
 
 	if recipe == nil {
 		globalNodeIdCounter++
-		return scraper.TreeNode{Id: globalNodeIdCounter, Name: "Error: Recipe data is nil."}
+		return scraper.TreeNode{Id: globalNodeIdCounter, Name: "Error: Recipe data is nil."}, 0
 	}
 	if scraper.IsBaseElement(targetElementName) {
 		globalNodeIdCounter++
-		return scraper.TreeNode{Id: globalNodeIdCounter, Name: targetElementName, ImageSrc: (*tierMap)[targetElementName].ImageSrc}
+		return scraper.TreeNode{Id: globalNodeIdCounter, Name: targetElementName, ImageSrc: (*tierMap)[targetElementName].ImageSrc}, 0
 	}
 
 	recipesForTarget, targetExists := (*recipe)[targetElementName]
 	if !targetExists || len(recipesForTarget) == 0 {
 		globalNodeIdCounter++
-		return scraper.TreeNode{Id: globalNodeIdCounter, Name: fmt.Sprintf("Element '%s' no recipes.", targetElementName)}
+		return scraper.TreeNode{Id: globalNodeIdCounter, Name: fmt.Sprintf("Element '%s' no recipes.", targetElementName)}, 0
 	}
 
 	visitedFwd := make(map[string]bool)
@@ -172,7 +173,7 @@ func solveSingleElementBidirectionally(
 
 	if len(baseElementsList) == 0 {
 		globalNodeIdCounter++
-		return scraper.TreeNode{Id: globalNodeIdCounter, Name: "Error: No base elements."}
+		return scraper.TreeNode{Id: globalNodeIdCounter, Name: "Error: No base elements."}, 0
 	}
 
 	currentFwdQueue := make([]string, 0, len(baseElementsList))
@@ -182,6 +183,8 @@ func solveSingleElementBidirectionally(
 			currentFwdQueue = append(currentFwdQueue, el)
 		}
 	}
+
+	startTime := time.Now()
 
 	visitedBwd := make(map[string]bool)
 	currentBwdQueue := []string{targetElementName}
@@ -265,10 +268,13 @@ func solveSingleElementBidirectionally(
 		}
 	}
 
+	duration = time.Since(startTime)
+	
 	if len(orderedMeetingNodes) == 0 {
 		stopConditionStandard := func(name string) bool { return scraper.IsBaseElement(name) }
 		pathVisitedStandard := make(map[string]bool)
-		return reconstructSinglePathRecursive(targetElementName, recipe, tierMap, stopConditionStandard, pathVisitedStandard, 0, maxReconstructionDepth)
+		reconstructedNode := reconstructSinglePathRecursive(targetElementName, recipe, tierMap, stopConditionStandard, pathVisitedStandard, 0, maxReconstructionDepth)
+		return reconstructedNode, duration
 	}
 
 	sort.Slice(orderedMeetingNodes, func(i, j int) bool {
@@ -309,7 +315,7 @@ func solveSingleElementBidirectionally(
 		if len(segmentMeetingToBase.Children) > 0 {
 			segmentStartToMeeting.Children = segmentMeetingToBase.Children
 		}
-		return segmentStartToMeeting
+		return segmentStartToMeeting, duration
 	}
 
 	nodeToAttach := findNodeInTreeBFSInternal(&segmentStartToMeeting, chosenMeetingNode)
@@ -319,7 +325,7 @@ func solveSingleElementBidirectionally(
 			nodeToAttach.Children = segmentMeetingToBase.Children
 		}
 	}
-	return segmentStartToMeeting
+	return segmentStartToMeeting, duration
 }
 
 func BidirectionalSearch(
@@ -328,24 +334,22 @@ func BidirectionalSearch(
 	startElementName string,
 	numRecipesToFind int,
 ) scraper.SearchResult {
-	startTime := time.Now()
+	var totalDuration time.Duration
 	globalNodeIdCounter = 0
 
 	rootNode := scraper.TreeNode{Id: globalNodeIdCounter, Name: startElementName, ImageSrc: (*tierMap)[startElementName].ImageSrc}
 	globalNodeIdCounter++
 
 	if scraper.IsBaseElement(startElementName) {
-        duration := time.Since(startTime)
 		nodeCount := countNodesInTree(&rootNode)
-		return scraper.SearchResult{Tree: rootNode, NodeCount: nodeCount, TimeTaken: duration.Nanoseconds()}
+		return scraper.SearchResult{Tree: rootNode, NodeCount: nodeCount, TimeTaken: 0}
 	}
 
 	initialCombinations, exists := (*recipe)[startElementName]
 	if !exists || len(initialCombinations) == 0 {
 		rootNode.Name = fmt.Sprintf("No recipes for %s", startElementName)
-		duration := time.Since(startTime)
 		nodeCount := countNodesInTree(&rootNode)
-		return scraper.SearchResult{Tree: rootNode, NodeCount: nodeCount, TimeTaken: duration.Nanoseconds()}
+		return scraper.SearchResult{Tree: rootNode, NodeCount: nodeCount, TimeTaken: 0}
 	}
 
 	numActualRecipes := len(initialCombinations)
@@ -365,12 +369,15 @@ func BidirectionalSearch(
 		ing2 := combination.Second()
 
 		var treeIngredient1, treeIngredient2 scraper.TreeNode
+		var searchTime1, searchTime2 time.Duration
 
 		if ing1 != "" {
-			treeIngredient1 = solveSingleElementBidirectionally(ing1, recipe, tierMap)
+			treeIngredient1, searchTime1 = solveSingleElementBidirectionally(ing1, recipe, tierMap)
+			totalDuration += searchTime1
 		}
 		if ing2 != "" {
-			treeIngredient2 = solveSingleElementBidirectionally(ing2, recipe, tierMap)
+			treeIngredient2, searchTime2 = solveSingleElementBidirectionally(ing2, recipe, tierMap)
+			totalDuration += searchTime2
 		}
 
 		globalNodeIdCounter++
@@ -428,6 +435,5 @@ func BidirectionalSearch(
 	}
 
 	nodeCount := countNodesInTree(&rootNode)
-	duration := time.Since(startTime)
-	return scraper.SearchResult{Tree: rootNode, NodeCount: nodeCount, TimeTaken: duration.Nanoseconds()}
+	return scraper.SearchResult{Tree: rootNode, NodeCount: nodeCount, TimeTaken: totalDuration.Nanoseconds()}
 }
