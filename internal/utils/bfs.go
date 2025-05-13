@@ -113,7 +113,7 @@ func MultipleRecipeBFS(recipe *scraper.Recipe, tier *scraper.Tier, start string,
 
 					if liveUpdate {
 						mutex.Lock()
-						time.Sleep(300 * time.Millisecond) // Tambahkan delay 100ms
+						time.Sleep(300 * time.Millisecond) // Tambahkan delay 300ms
 						wsManager.BroadcastNode(root)
 						mutex.Unlock()
 					}
