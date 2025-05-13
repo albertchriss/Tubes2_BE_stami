@@ -152,3 +152,38 @@ func (recipe *Recipe) SortRecipeChildren(tier *Tier) {
 	}
 
 }
+
+// helper function
+func (currNode *TreeNode) CountNumRecipe(parent *map[int]*TreeNode, numPath *map[int]int) int {
+	num := 0
+
+	if currNode.Name == "+" {
+		num = (*numPath)[currNode.Children[0].Id] * (*numPath)[currNode.Children[1].Id]
+	} else {
+		for _, child := range currNode.Children {
+			num += (*numPath)[child.Id]
+		}
+	}
+	(*numPath)[currNode.Id] = num
+
+	if currNode.Id == 0 {
+		return num
+	}
+
+	par := (*parent)[currNode.Id]
+	return par.CountNumRecipe(parent, numPath)
+}
+
+// node has to be a "+" node
+func (node *TreeNode) InitParAndNum(parNode *TreeNode, parent *map[int]*TreeNode, numPath *map[int]int) {
+	if node.Name != "+" {
+		return
+	}
+
+	(*parent)[node.Id] = parNode
+	(*parent)[node.Children[0].Id] = node
+	(*parent)[node.Children[1].Id] = node
+	(*numPath)[node.Id] = 1
+	(*numPath)[node.Children[0].Id] = 1
+	(*numPath)[node.Children[1].Id] = 1
+}
