@@ -46,6 +46,12 @@ type TreeNode struct {
 	Children []TreeNode `json:"children"`
 }
 
+type SearchResult struct {
+	Tree      TreeNode
+	NodeCount int
+	TimeTaken int64
+}
+
 func JsonToRecipe(filename string) *Recipe {
 	var result Recipe
 	file, err := os.ReadFile(filename)

@@ -6,6 +6,15 @@ definitions:
       status:
         type: string
     type: object
+  scraper.SearchResult:
+    properties:
+      nodeCount:
+        type: integer
+      timeTaken:
+        type: integer
+      tree:
+        $ref: '#/definitions/scraper.TreeNode'
+    type: object
   scraper.TreeNode:
     properties:
       children:
@@ -31,7 +40,7 @@ definitions:
       message:
         type: string
       result:
-        $ref: '#/definitions/scraper.TreeNode'
+        $ref: '#/definitions/scraper.SearchResult'
     type: object
 info:
   contact: {}
