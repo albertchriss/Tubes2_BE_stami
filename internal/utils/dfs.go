@@ -79,7 +79,7 @@ func SingleDFSHelper(recipe *scraper.Recipe, tier *scraper.Tier, start string, p
 	(*params.NodeCount) += 2
 
 	if liveUpdate {
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(300 * time.Millisecond)
 		wsManager.BroadcastNode(*root)
 	}
 

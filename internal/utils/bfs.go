@@ -40,7 +40,7 @@ func SingleRecipeBFS(recipe *scraper.Recipe, tier *scraper.Tier, start string, l
 		currNode.Children = append(currNode.Children, *node)
 		nodeCount += 2
 		if liveUpdate {
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(300 * time.Millisecond)
 			wsManager.BroadcastNode(root)
 		}
 		queue = append(queue, &node.Children[0], &node.Children[1])
