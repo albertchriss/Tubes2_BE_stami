@@ -205,6 +205,20 @@ const docTemplate = `{
                 }
             }
         },
+        "scraper.SearchResult": {
+            "type": "object",
+            "properties": {
+                "nodeCount": {
+                    "type": "integer"
+                },
+                "timeTaken": {
+                    "type": "integer"
+                },
+                "tree": {
+                    "$ref": "#/definitions/scraper.TreeNode"
+                }
+            }
+        },
         "scraper.TreeNode": {
             "type": "object",
             "properties": {
@@ -243,7 +257,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "result": {
-                    "$ref": "#/definitions/scraper.TreeNode"
+                    "$ref": "#/definitions/scraper.SearchResult"
                 }
             }
         }

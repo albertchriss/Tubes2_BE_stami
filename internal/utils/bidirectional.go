@@ -337,7 +337,7 @@ func BidirectionalSearch(
 	if scraper.IsBaseElement(startElementName) {
         duration := time.Since(startTime)
 		nodeCount := countNodesInTree(&rootNode)
-		return scraper.SearchResult{Tree: rootNode, NodeCount: nodeCount, TimeTaken: duration}
+		return scraper.SearchResult{Tree: rootNode, NodeCount: nodeCount, TimeTaken: duration.Nanoseconds()}
 	}
 
 	initialCombinations, exists := (*recipe)[startElementName]
@@ -345,7 +345,7 @@ func BidirectionalSearch(
 		rootNode.Name = fmt.Sprintf("No recipes for %s", startElementName)
 		duration := time.Since(startTime)
 		nodeCount := countNodesInTree(&rootNode)
-		return scraper.SearchResult{Tree: rootNode, NodeCount: nodeCount, TimeTaken: duration}
+		return scraper.SearchResult{Tree: rootNode, NodeCount: nodeCount, TimeTaken: duration.Nanoseconds()}
 	}
 
 	numActualRecipes := len(initialCombinations)
@@ -429,5 +429,5 @@ func BidirectionalSearch(
 
 	nodeCount := countNodesInTree(&rootNode)
 	duration := time.Since(startTime)
-	return scraper.SearchResult{Tree: rootNode, NodeCount: nodeCount, TimeTaken: duration}
+	return scraper.SearchResult{Tree: rootNode, NodeCount: nodeCount, TimeTaken: duration.Nanoseconds()}
 }

@@ -47,7 +47,7 @@ func SingleRecipeBFS(recipe *scraper.Recipe, tier *scraper.Tier, start string, l
 	}
 
 	duration := time.Since(startTime)
-	return scraper.SearchResult{Tree: root, NodeCount: nodeCount, TimeTaken: duration}
+	return scraper.SearchResult{Tree: root, NodeCount: nodeCount, TimeTaken: duration.Nanoseconds()}
 }
 
 func MultipleRecipeBFS(recipe *scraper.Recipe, tier *scraper.Tier, start string, numRecipe int, liveUpdate bool, wsManager *socket.ClientManager) scraper.SearchResult {
@@ -129,5 +129,5 @@ func MultipleRecipeBFS(recipe *scraper.Recipe, tier *scraper.Tier, start string,
 	}
 
 	duration := time.Since(startTime)
-	return scraper.SearchResult{Tree: root, NodeCount: nodeCount, TimeTaken: duration}
+	return scraper.SearchResult{Tree: root, NodeCount: nodeCount, TimeTaken: duration.Nanoseconds()}
 }

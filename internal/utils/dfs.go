@@ -46,7 +46,7 @@ func SingleRecipeDFS(recipe *scraper.Recipe, tier *scraper.Tier, start string, l
 	}
 	SingleDFSHelper(recipe, tier, start, params, &root)
 	duration := time.Since(startTime)
-	return scraper.SearchResult{Tree: root, NodeCount: nodeCount, TimeTaken: duration}
+	return scraper.SearchResult{Tree: root, NodeCount: nodeCount, TimeTaken: duration.Nanoseconds()}
 }
 
 func SingleDFSHelper(recipe *scraper.Recipe, tier *scraper.Tier, start string, params *SingleHelperParams, currNode *scraper.TreeNode) {
@@ -115,7 +115,7 @@ func MultipleRecipeDFS(recipe *scraper.Recipe, tier *scraper.Tier, start string,
 	wg.Wait()
 	duration := time.Since(startTime)
 	finalNodeCount := int(atomic.LoadInt32(&nodeCounter))
-	return scraper.SearchResult{Tree: root, NodeCount: finalNodeCount, TimeTaken: duration}
+	return scraper.SearchResult{Tree: root, NodeCount: finalNodeCount, TimeTaken: duration.Nanoseconds()}
 }
 
 func MultipleRecipeHelper(recipe *scraper.Recipe, tier *scraper.Tier, name string, numRecipe int, params *MultHelperParams, currNode *scraper.TreeNode) {
