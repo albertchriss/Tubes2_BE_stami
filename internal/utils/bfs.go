@@ -122,11 +122,12 @@ func MultipleRecipeBFS(recipe *scraper.Recipe, tier *scraper.Tier, start string,
 		}
 		wg.Wait()
 
-		mutex.Lock()
-		nodeCount += len(currentQueue)
-		mutex.Unlock()
-
-		queue = currentQueue
+		if nodeCount+len(currentQueue) < scraper.MAX_NODE_COUNT {
+			nodeCount += len(currentQueue)
+			queue = currentQueue
+		} else {
+			break
+		}
 	}
 
 	duration := time.Since(startTime)

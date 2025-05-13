@@ -187,3 +187,5 @@ func (node *TreeNode) InitParAndNum(parNode *TreeNode, parent *map[int]*TreeNode
 	(*numPath)[node.Children[0].Id] = 1
 	(*numPath)[node.Children[1].Id] = 1
 }
+
+const MAX_NODE_COUNT int = 500

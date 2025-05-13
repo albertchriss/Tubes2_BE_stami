@@ -2,7 +2,6 @@ package utils
 
 import (
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/albertchriss/Tubes2_BE_stami/internal/app/socket"
@@ -14,7 +13,7 @@ type MultHelperParams struct {
 	Id         *int
 	Parent     *map[int]*scraper.TreeNode
 	NumPath    *map[int]int
-	NodeCount  *int32
+	NodeCount  *int
 	Mutex      *sync.Mutex
 	Wg         *sync.WaitGroup
 	Done       *bool
@@ -93,7 +92,7 @@ func MultipleRecipeDFS(recipe *scraper.Recipe, tier *scraper.Tier, start string,
 	done := false
 	var mutex sync.Mutex
 	var wg sync.WaitGroup
-	var nodeCounter int32 = 1
+	nodeCounter := 1
 
 	root := scraper.TreeNode{Name: start, Id: id, ImageSrc: (*tier)[start].ImageSrc}
 
@@ -117,7 +116,7 @@ func MultipleRecipeDFS(recipe *scraper.Recipe, tier *scraper.Tier, start string,
 	go MultipleRecipeHelper(recipe, tier, start, numRecipe, params, &root)
 	wg.Wait()
 	duration := time.Since(startTime)
-	finalNodeCount := int(atomic.LoadInt32(&nodeCounter))
+	finalNodeCount := nodeCounter
 	return scraper.SearchResult{Tree: root, NodeCount: finalNodeCount, TimeTaken: duration.Nanoseconds()}
 }
 
@@ -157,13 +156,17 @@ func MultipleRecipeHelper(recipe *scraper.Recipe, tier *scraper.Tier, name strin
 		}
 
 		mutex.Lock()
+		if *params.NodeCount+2 > scraper.MAX_NODE_COUNT {
+			mutex.Unlock()
+			return
+		}
 		node.InitParAndNum(currNode, parent, numPath)
 		if (*done) && i > 0 {
 			mutex.Unlock()
 			break
 		}
 		currNode.Children = append(currNode.Children, *node)
-		atomic.AddInt32(params.NodeCount, 2)
+		(*params.NodeCount) += 2
 		if i > 0 {
 			num := currNode.CountNumRecipe(parent, numPath)
 			if num >= numRecipe {
