@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/albertchriss/Tubes2_BE_stami/docs"
 	"github.com/albertchriss/Tubes2_BE_stami/internal/api"
 	"github.com/albertchriss/Tubes2_BE_stami/internal/core"
 	"github.com/albertchriss/Tubes2_BE_stami/internal/utils"
@@ -13,7 +14,7 @@ import (
 // It also registers the API routes.
 func Run() {
 	r := gin.Default()
-	
+
 	cfg := core.NewAppConfig()
 
 	corsConfig := cors.DefaultConfig()
@@ -21,6 +22,9 @@ func Run() {
 	corsConfig.AllowOrigins = []string{allowedOrigin}
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	corsConfig.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization"}
+
+	// on production
+	docs.SwaggerInfo.BasePath = "/api"
 
 	appCtx := core.AppContext{
 		Config: cfg,

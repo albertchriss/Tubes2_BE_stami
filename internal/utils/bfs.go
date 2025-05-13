@@ -40,7 +40,7 @@ func SingleRecipeBFS(recipe *scraper.Recipe, tier *scraper.Tier, start string, l
 		currNode.Children = append(currNode.Children, *node)
 		nodeCount += 2
 		if liveUpdate {
-			time.Sleep(300 * time.Millisecond)
+			time.Sleep(500 * time.Millisecond)
 			wsManager.BroadcastNode(root)
 		}
 		queue = append(queue, &node.Children[0], &node.Children[1])
@@ -113,7 +113,7 @@ func MultipleRecipeBFS(recipe *scraper.Recipe, tier *scraper.Tier, start string,
 
 					if liveUpdate {
 						mutex.Lock()
-						time.Sleep(300 * time.Millisecond) // Tambahkan delay 300ms
+						time.Sleep(500 * time.Millisecond) // Tambahkan delay 500ms
 						wsManager.BroadcastNode(root)
 						mutex.Unlock()
 					}
